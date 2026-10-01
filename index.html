@@ -115,7 +115,7 @@
       window.Telegram.WebApp.expand();
     }
 
-    const BACKEND_URL = "https://swkzx-46-160-189-108.free.pinggy.net";
+    const BACKEND_URL = "https://btc-az-radar.duckdns.org:8443";
     const SYMBOL = 'BTCUSDT';
 
     async function fetchTicker() {
@@ -134,11 +134,7 @@
     }
 
     async function fetchMLPrediction() {
-      const res = await fetch(`${BACKEND_URL}/api/predict`, {
-        headers: {
-          'bypass-tunnel-reminder': 'true'
-        }
-      });
+      const res = await fetch(`${BACKEND_URL}/api/predict`);
       return await res.json();
     }
 
