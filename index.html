@@ -3,52 +3,68 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>BTC Futures Radar</title>
+  <title>BTC Risk Terminal</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <style>
     :root {
       --bg: #0b0e14;
       --card-bg: #161b26;
+      --card-inner: #10141d;
       --text: #ffffff;
       --text-muted: #8b949e;
       --accent-green: #00f092;
       --accent-red: #ff3b69;
       --accent-yellow: #f5a623;
+      --accent-blue: #2f80ed;
       --border: #242c3d;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
-    body { background-color: var(--bg); color: var(--text); padding: 16px; min-height: 100vh; }
+    body { background-color: var(--bg); color: var(--text); padding: 14px; min-height: 100vh; }
     
-    .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
-    .title { font-size: 1.2rem; font-weight: 700; color: #fff; }
-    .badge-live { display: inline-flex; align-items: center; gap: 6px; font-size: 0.75rem; color: var(--accent-green); background: rgba(0, 240, 146, 0.1); padding: 4px 8px; border-radius: 12px; }
+    .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+    .title { font-size: 1.1rem; font-weight: 700; letter-spacing: 0.5px; }
+    .badge-live { display: inline-flex; align-items: center; gap: 6px; font-size: 0.7rem; color: var(--accent-green); background: rgba(0, 240, 146, 0.1); padding: 3px 8px; border-radius: 10px; }
     .dot { width: 6px; height: 6px; background: var(--accent-green); border-radius: 50%; animation: pulse 1.5s infinite; }
     @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } }
 
-    .card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 16px; padding: 16px; margin-bottom: 12px; }
+    .card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 14px; padding: 14px; margin-bottom: 10px; }
     
-    .price-box { text-align: center; padding: 16px 0; }
-    .symbol { font-size: 0.85rem; color: var(--text-muted); letter-spacing: 1px; }
-    .price { font-size: 2.2rem; font-weight: 800; margin: 4px 0; }
-    .change { font-size: 0.9rem; font-weight: 600; }
+    .price-box { text-align: center; padding: 10px 0; }
+    .symbol { font-size: 0.75rem; color: var(--text-muted); letter-spacing: 1px; }
+    .price { font-size: 2rem; font-weight: 800; margin: 2px 0; }
+    .change { font-size: 0.85rem; font-weight: 600; }
     
-    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
-    .metric { background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 12px; }
-    .metric-title { font-size: 0.75rem; color: var(--text-muted); margin-bottom: 4px; }
-    .metric-value { font-size: 1.05rem; font-weight: 700; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px; }
+    .metric { background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 10px; }
+    .metric-title { font-size: 0.7rem; color: var(--text-muted); margin-bottom: 3px; }
+    .metric-value { font-size: 0.95rem; font-weight: 700; }
     
-    .signal-card { border-left: 4px solid var(--border); }
-    .signal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-    .signal-direction { font-size: 1.3rem; font-weight: 800; }
-    .signal-conf { font-size: 0.85rem; padding: 2px 8px; border-radius: 6px; font-weight: 600; }
-    
-    .levels { margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--border); display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 0.8rem; }
+    /* Risk Engine Card */
+    .risk-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+    .action-tag { font-size: 1.15rem; font-weight: 800; }
+    .score-badge { font-size: 0.8rem; font-weight: 700; padding: 2px 8px; border-radius: 6px; }
+
+    /* Progress bar */
+    .bar-bg { width: 100%; height: 6px; background: var(--card-inner); border-radius: 3px; overflow: hidden; margin: 8px 0 12px; }
+    .bar-fill { height: 100%; width: 45%; transition: width 0.4s ease, background-color 0.4s ease; }
+
+    .meta-row { display: flex; justify-content: space-between; font-size: 0.75rem; margin-bottom: 4px; }
+    .meta-label { color: var(--text-muted); }
+    .meta-val { font-weight: 600; }
+
+    .drivers-box { background: var(--card-inner); border-radius: 8px; padding: 8px; margin-top: 8px; font-size: 0.75rem; }
+    .drivers-title { color: var(--text-muted); font-size: 0.68rem; text-transform: uppercase; margin-bottom: 4px; }
+    .driver-item { display: flex; align-items: center; gap: 6px; margin-bottom: 2px; }
+    .driver-dot { width: 4px; height: 4px; border-radius: 50%; background: var(--accent-yellow); }
+
+    .levels { margin-top: 10px; padding-top: 8px; border-top: 1px dashed var(--border); display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; font-size: 0.72rem; }
     .level-item { display: flex; flex-direction: column; }
-    .level-label { color: var(--text-muted); font-size: 0.7rem; }
-    .level-val { font-weight: 600; margin-top: 2px; }
-    
-    .btn-refresh { width: 100%; background: #2f80ed; color: #fff; border: none; border-radius: 12px; padding: 14px; font-size: 0.95rem; font-weight: 700; cursor: pointer; transition: opacity 0.2s; }
+    .level-label { color: var(--text-muted); font-size: 0.65rem; }
+    .level-val { font-weight: 700; margin-top: 2px; }
+
+    .btn-refresh { width: 100%; background: var(--accent-blue); color: #fff; border: none; border-radius: 12px; padding: 12px; font-size: 0.9rem; font-weight: 700; cursor: pointer; }
     .btn-refresh:active { opacity: 0.8; }
+
     .up { color: var(--accent-green); }
     .down { color: var(--accent-red); }
     .neutral { color: var(--accent-yellow); }
@@ -57,57 +73,72 @@
 <body>
 
   <div class="header">
-    <div class="title">BTC/USDT ML Radar</div>
-    <div class="badge-live"><div class="dot"></div> LIVE</div>
+    <div class="title">BTC Risk Terminal</div>
+    <div class="badge-live"><div class="dot"></div> PRO ENGINE</div>
   </div>
 
   <div class="card price-box">
-    <div class="symbol">PERPETUAL CONTRACT</div>
+    <div class="symbol">BTC/USDT PERPETUAL</div>
     <div class="price" id="btcPrice">---.--</div>
     <div class="change" id="btcChange">0.00%</div>
   </div>
 
   <div class="grid">
     <div class="metric">
-      <div class="metric-title">Funding Rate (8h)</div>
-      <div class="metric-value" id="btcFunding">--%</div>
+      <div class="metric-title">Market Regime</div>
+      <div class="metric-value" id="regimeVal" style="font-size: 0.8rem;">---</div>
     </div>
     <div class="metric">
-      <div class="metric-title">Open Interest (BTC)</div>
-      <div class="metric-value" id="btcOI">--</div>
+      <div class="metric-title">HTF Trend (1h)</div>
+      <div class="metric-value" id="htfVal">---</div>
     </div>
     <div class="metric">
-      <div class="metric-title">ML RSI (15m)</div>
-      <div class="metric-value" id="btcRSI">--</div>
+      <div class="metric-title">Choppiness Index</div>
+      <div class="metric-value" id="chopVal">--</div>
     </div>
     <div class="metric">
-      <div class="metric-title">ATR Волатильность</div>
-      <div class="metric-value" id="btcAtr">--</div>
+      <div class="metric-title">15m Order Delta</div>
+      <div class="metric-value" id="deltaVal">--%</div>
     </div>
   </div>
 
-  <div class="card signal-card" id="signalContainer">
-    <div class="signal-header">
-      <div class="signal-direction" id="signalAction">ОПРОС ML...</div>
-      <div class="signal-conf" id="signalProb">--%</div>
+  <div class="card">
+    <div class="risk-header">
+      <div class="action-tag" id="actionVal">АНАЛИЗ...</div>
+      <div class="score-badge" id="scoreBadge">Score: --</div>
     </div>
-    <div style="font-size: 0.82rem; color: var(--text-muted);" id="signalReason">
-      Запрос к серверу CatBoost...
+
+    <div class="bar-bg">
+      <div class="bar-fill" id="scoreBar"></div>
+    </div>
+
+    <div class="meta-row">
+      <span class="meta-label">Рекомендация по риску:</span>
+      <span class="meta-val" id="riskRec">---</span>
+    </div>
+
+    <div class="drivers-box">
+      <div class="drivers-title">Драйверы решения (Risk Drivers)</div>
+      <div id="driversList">Загрузка факторов...</div>
     </div>
 
     <div class="levels">
       <div class="level-item">
-        <span class="level-label">Take Profit (ML ATR)</span>
+        <span class="level-label">Take Profit</span>
         <span class="level-val up" id="tpLevel">---</span>
       </div>
       <div class="level-item">
-        <span class="level-label">Stop Loss (ML ATR)</span>
+        <span class="level-label">Stop Loss</span>
         <span class="level-val down" id="slLevel">---</span>
+      </div>
+      <div class="level-item">
+        <span class="level-label">Слом структуры</span>
+        <span class="level-val" style="color: #ff9f43;" id="invLevel">---</span>
       </div>
     </div>
   </div>
 
-  <button class="btn-refresh" onclick="updateAllData()">Обновить данные</button>
+  <button class="btn-refresh" onclick="updateAllData()">Обновить терминал</button>
 
   <script>
     if (window.Telegram?.WebApp) {
@@ -123,89 +154,86 @@
       return await res.json();
     }
 
-    async function fetchFunding() {
-      const res = await fetch(`https://fapi.binance.com/fapi/v1/premiumIndex?symbol=${SYMBOL}`);
-      return await res.json();
-    }
-
-    async function fetchOI() {
-      const res = await fetch(`https://fapi.binance.com/fapi/v1/openInterest?symbol=${SYMBOL}`);
-      return await res.json();
-    }
-
-    async function fetchMLPrediction() {
+    async function fetchRiskEngine() {
       const res = await fetch(`${BACKEND_URL}/api/predict`);
       return await res.json();
     }
 
     async function updateAllData() {
       try {
-        const [ticker, funding, oi, mlData] = await Promise.all([
-          fetchTicker(),
-          fetchFunding(),
-          fetchOI(),
-          fetchMLPrediction()
-        ]);
+        const [ticker, data] = await Promise.all([fetchTicker(), fetchRiskEngine()]);
 
+        if (data.status === "INITIALIZING") return;
+
+        // Биржевые котировки
         const price = parseFloat(ticker.lastPrice);
         const change = parseFloat(ticker.priceChangePercent);
-        const fundingRate = parseFloat(funding.lastFundingRate) * 100;
-        const openInterest = parseFloat(oi.openInterest);
-
-        // Биржевые метрики
         document.getElementById('btcPrice').innerText = '$' + price.toLocaleString('en-US', { minimumFractionDigits: 1 });
         const changeEl = document.getElementById('btcChange');
         changeEl.innerText = (change >= 0 ? '+' : '') + change.toFixed(2) + '% (24h)';
         changeEl.className = 'change ' + (change >= 0 ? 'up' : 'down');
 
-        const fundEl = document.getElementById('btcFunding');
-        fundEl.innerText = fundingRate.toFixed(4) + '%';
-        fundEl.className = 'metric-value ' + (fundingRate > 0.03 ? 'down' : (fundingRate < -0.01 ? 'up' : 'neutral'));
-        document.getElementById('btcOI').innerText = Math.round(openInterest).toLocaleString('en-US') + ' BTC';
+        // Микроструктура и фильтры
+        document.getElementById('regimeVal').innerText = data.market_regime;
+        
+        const htfEl = document.getElementById('htfVal');
+        htfEl.innerText = data.htf_trend_1h;
+        htfEl.className = 'metric-value ' + (data.htf_trend_1h === 'BULLISH' ? 'up' : (data.htf_trend_1h === 'BEARISH' ? 'down' : 'neutral'));
 
-        // Данные из CatBoost модели
-        document.getElementById('btcRSI').innerText = mlData.rsi;
-        document.getElementById('btcAtr').innerText = '$' + mlData.atr;
+        document.getElementById('chopVal').innerText = data.metrics.choppiness_index;
+        
+        const deltaEl = document.getElementById('deltaVal');
+        deltaEl.innerText = (data.metrics.delta_ratio > 0 ? '+' : '') + data.metrics.delta_ratio + '%';
+        deltaEl.className = 'metric-value ' + (data.metrics.delta_ratio > 0 ? 'up' : 'down');
 
-        const actionEl = document.getElementById('signalAction');
-        const probEl = document.getElementById('signalProb');
-        const tpEl = document.getElementById('tpLevel');
-        const slEl = document.getElementById('slLevel');
-        const container = document.getElementById('signalContainer');
-        const reasonEl = document.getElementById('signalReason');
+        // Риск-скоринг
+        const score = data.trade_score;
+        const scoreEl = document.getElementById('scoreBadge');
+        const scoreBar = document.getElementById('scoreBar');
+        scoreEl.innerText = `Score: ${score}/100`;
+        scoreBar.style.width = `${score}%`;
 
-        actionEl.innerText = mlData.action;
-        probEl.innerText = `${mlData.confidence}% ML Conf`;
-
-        if (mlData.action.includes("LONG")) {
-          actionEl.className = 'signal-direction up';
-          container.style.borderLeftColor = 'var(--accent-green)';
-          probEl.className = 'signal-conf up';
-          tpEl.innerText = '$' + mlData.take_profit.toLocaleString();
-          slEl.innerText = '$' + mlData.stop_loss.toLocaleString();
-        } else if (mlData.action.includes("SHORT")) {
-          actionEl.className = 'signal-direction down';
-          container.style.borderLeftColor = 'var(--accent-red)';
-          probEl.className = 'signal-conf down';
-          tpEl.innerText = '$' + mlData.take_profit.toLocaleString();
-          slEl.innerText = '$' + mlData.stop_loss.toLocaleString();
-        } else {
-          actionEl.className = 'signal-direction neutral';
-          container.style.borderLeftColor = 'var(--accent-yellow)';
-          probEl.className = 'signal-conf neutral';
-          tpEl.innerText = '---';
-          slEl.innerText = '---';
+        let themeClass = 'neutral';
+        let barColor = 'var(--accent-yellow)';
+        if (score >= 70) {
+          themeClass = 'up';
+          barColor = 'var(--accent-green)';
+        } else if (score <= 30) {
+          themeClass = 'down';
+          barColor = 'var(--accent-red)';
         }
 
-        reasonEl.innerText = `CatBoost 15m • Горизонт: ${mlData.horizon} • Динамический ATR риск-профиль`;
+        scoreEl.className = `score-badge ${themeClass}`;
+        scoreBar.style.backgroundColor = barColor;
+
+        const actionEl = document.getElementById('actionVal');
+        actionEl.innerText = data.action;
+        actionEl.className = `action-tag ${themeClass}`;
+
+        document.getElementById('riskRec').innerText = data.risk_recommendation;
+
+        // Драйверы риска
+        const driversList = document.getElementById('driversList');
+        if (data.risk_drivers && data.risk_drivers.length > 0) {
+          driversList.innerHTML = data.risk_drivers.map(d => 
+            `<div class="driver-item"><div class="driver-dot"></div><span>${d}</span></div>`
+          ).join('');
+        } else {
+          driversList.innerHTML = '<span style="color: var(--text-muted);">Критических рисков не выявлено</span>';
+        }
+
+        // Уровни
+        document.getElementById('tpLevel').innerText = data.take_profit > 0 ? '$' + data.take_profit.toLocaleString() : '---';
+        document.getElementById('slLevel').innerText = data.stop_loss > 0 ? '$' + data.stop_loss.toLocaleString() : '---';
+        document.getElementById('invLevel').innerText = data.structural_invalidation > 0 ? '$' + data.structural_invalidation.toLocaleString() : '---';
 
       } catch (err) {
-        console.error('Ошибка обновления данных:', err);
+        console.warn("Сетевой пропуск тика:", err);
       }
     }
 
     updateAllData();
-    setInterval(updateAllData, 15000);
+    setInterval(updateAllData, 3500);
   </script>
 </body>
 </html>
