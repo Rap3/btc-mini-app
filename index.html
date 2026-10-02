@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>BTC Risk Terminal</title>
+  <title>BTC Risk & Execution Terminal</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <style>
     :root {
@@ -19,51 +19,61 @@
       --border: #242c3d;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
-    body { background-color: var(--bg); color: var(--text); padding: 14px; min-height: 100vh; }
+    body { background-color: var(--bg); color: var(--text); padding: 12px; min-height: 100vh; }
     
-    .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
-    .title { font-size: 1.1rem; font-weight: 700; letter-spacing: 0.5px; }
+    .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+    .title { font-size: 1.05rem; font-weight: 700; letter-spacing: 0.5px; }
     .badge-live { display: inline-flex; align-items: center; gap: 6px; font-size: 0.7rem; color: var(--accent-green); background: rgba(0, 240, 146, 0.1); padding: 3px 8px; border-radius: 10px; }
     .dot { width: 6px; height: 6px; background: var(--accent-green); border-radius: 50%; animation: pulse 1.5s infinite; }
     @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } }
 
-    .card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 14px; padding: 14px; margin-bottom: 10px; }
+    .card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 14px; padding: 12px; margin-bottom: 10px; }
     
-    .price-box { text-align: center; padding: 10px 0; }
+    .price-box { text-align: center; padding: 8px 0; }
     .symbol { font-size: 0.75rem; color: var(--text-muted); letter-spacing: 1px; }
     .price { font-size: 2rem; font-weight: 800; margin: 2px 0; }
     .change { font-size: 0.85rem; font-weight: 600; }
     
     .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px; }
     .metric { background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 10px; }
-    .metric-title { font-size: 0.7rem; color: var(--text-muted); margin-bottom: 3px; }
+    .metric-title { font-size: 0.68rem; color: var(--text-muted); margin-bottom: 3px; }
     .metric-value { font-size: 0.95rem; font-weight: 700; }
     
+    /* Imbalance Bar */
+    .imbalance-wrapper { margin-top: 6px; }
+    .imbalance-bar { display: flex; height: 6px; border-radius: 3px; overflow: hidden; background: #242c3d; }
+    .imbalance-bids { background: var(--accent-green); transition: width 0.3s; }
+    .imbalance-asks { background: var(--accent-red); transition: width 0.3s; }
+
     /* Risk Engine Card */
     .risk-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-    .action-tag { font-size: 1.15rem; font-weight: 800; }
-    .score-badge { font-size: 0.8rem; font-weight: 700; padding: 2px 8px; border-radius: 6px; }
+    .action-tag { font-size: 1.1rem; font-weight: 800; }
+    .score-badge { font-size: 0.75rem; font-weight: 700; padding: 2px 8px; border-radius: 6px; }
 
-    /* Progress bar */
-    .bar-bg { width: 100%; height: 6px; background: var(--card-inner); border-radius: 3px; overflow: hidden; margin: 8px 0 12px; }
+    .bar-bg { width: 100%; height: 5px; background: var(--card-inner); border-radius: 3px; overflow: hidden; margin: 6px 0 10px; }
     .bar-fill { height: 100%; width: 45%; transition: width 0.4s ease, background-color 0.4s ease; }
 
-    .meta-row { display: flex; justify-content: space-between; font-size: 0.75rem; margin-bottom: 4px; }
-    .meta-label { color: var(--text-muted); }
-    .meta-val { font-weight: 600; }
-
-    .drivers-box { background: var(--card-inner); border-radius: 8px; padding: 8px; margin-top: 8px; font-size: 0.75rem; }
-    .drivers-title { color: var(--text-muted); font-size: 0.68rem; text-transform: uppercase; margin-bottom: 4px; }
+    .drivers-box { background: var(--card-inner); border-radius: 8px; padding: 8px; margin: 8px 0; font-size: 0.72rem; }
+    .drivers-title { color: var(--text-muted); font-size: 0.65rem; text-transform: uppercase; margin-bottom: 4px; }
     .driver-item { display: flex; align-items: center; gap: 6px; margin-bottom: 2px; }
-    .driver-dot { width: 4px; height: 4px; border-radius: 50%; background: var(--accent-yellow); }
+    .driver-dot { width: 4px; height: 4px; border-radius: 50%; background: var(--accent-yellow); flex-shrink: 0; }
+
+    /* Position Sizing Calculator */
+    .calc-box { background: var(--card-inner); border: 1px solid var(--border); border-radius: 10px; padding: 10px; margin-top: 10px; }
+    .calc-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+    .calc-title { font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; }
+    .depo-input-wrap { display: flex; align-items: center; gap: 4px; }
+    .depo-input { width: 70px; background: var(--card-bg); border: 1px solid var(--border); border-radius: 6px; color: #fff; font-size: 0.75rem; padding: 2px 6px; text-align: right; }
+
+    .sizing-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; text-align: center; }
+    .sizing-item { background: var(--card-bg); border-radius: 6px; padding: 6px; }
+    .sizing-label { color: var(--text-muted); font-size: 0.62rem; margin-bottom: 2px; }
+    .sizing-val { font-size: 0.8rem; font-weight: 700; color: #fff; }
 
     .levels { margin-top: 10px; padding-top: 8px; border-top: 1px dashed var(--border); display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; font-size: 0.72rem; }
     .level-item { display: flex; flex-direction: column; }
     .level-label { color: var(--text-muted); font-size: 0.65rem; }
     .level-val { font-weight: 700; margin-top: 2px; }
-
-    .btn-refresh { width: 100%; background: var(--accent-blue); color: #fff; border: none; border-radius: 12px; padding: 12px; font-size: 0.9rem; font-weight: 700; cursor: pointer; }
-    .btn-refresh:active { opacity: 0.8; }
 
     .up { color: var(--accent-green); }
     .down { color: var(--accent-red); }
@@ -74,7 +84,7 @@
 
   <div class="header">
     <div class="title">BTC Risk Terminal</div>
-    <div class="badge-live"><div class="dot"></div> PRO ENGINE</div>
+    <div class="badge-live"><div class="dot"></div> SSE STREAM</div>
   </div>
 
   <div class="card price-box">
@@ -86,7 +96,7 @@
   <div class="grid">
     <div class="metric">
       <div class="metric-title">Market Regime</div>
-      <div class="metric-value" id="regimeVal" style="font-size: 0.8rem;">---</div>
+      <div class="metric-value" id="regimeVal" style="font-size: 0.78rem;">---</div>
     </div>
     <div class="metric">
       <div class="metric-title">HTF Trend (1h)</div>
@@ -97,14 +107,20 @@
       <div class="metric-value" id="chopVal">--</div>
     </div>
     <div class="metric">
-      <div class="metric-title">15m Order Delta</div>
-      <div class="metric-value" id="deltaVal">--%</div>
+      <div class="metric-title">Orderbook Imbalance</div>
+      <div class="metric-value" id="imbalanceVal">0%</div>
+      <div class="imbalance-wrapper">
+        <div class="imbalance-bar">
+          <div class="imbalance-bids" id="barBids" style="width: 50%;"></div>
+          <div class="imbalance-asks" id="barAsks" style="width: 50%;"></div>
+        </div>
+      </div>
     </div>
   </div>
 
   <div class="card">
     <div class="risk-header">
-      <div class="action-tag" id="actionVal">АНАЛИЗ...</div>
+      <div class="action-tag" id="actionVal">ПОДКЛЮЧЕНИЕ...</div>
       <div class="score-badge" id="scoreBadge">Score: --</div>
     </div>
 
@@ -112,14 +128,34 @@
       <div class="bar-fill" id="scoreBar"></div>
     </div>
 
-    <div class="meta-row">
-      <span class="meta-label">Рекомендация по риску:</span>
-      <span class="meta-val" id="riskRec">---</span>
+    <div class="drivers-box">
+      <div class="drivers-title">Драйверы риска & микроструктура</div>
+      <div id="driversList">Ожидание первого потокового пакета...</div>
     </div>
 
-    <div class="drivers-box">
-      <div class="drivers-title">Драйверы решения (Risk Drivers)</div>
-      <div id="driversList">Загрузка факторов...</div>
+    <!-- Калькулятор риска -->
+    <div class="calc-box">
+      <div class="calc-header">
+        <span class="calc-title">Калькулятор мани-менеджмента</span>
+        <div class="depo-input-wrap">
+          <span style="font-size: 0.72rem; color: var(--text-muted);">$</span>
+          <input type="number" id="depoInput" class="depo-input" value="1000" min="10" step="50" oninput="recalcPosition()" />
+        </div>
+      </div>
+      <div class="sizing-grid">
+        <div class="sizing-item">
+          <div class="sizing-label">Макс. Риск</div>
+          <div class="sizing-val down" id="sizeRisk">$0.00</div>
+        </div>
+        <div class="sizing-item">
+          <div class="sizing-label">Размер позиции</div>
+          <div class="sizing-val" id="sizeUsd">$0.00</div>
+        </div>
+        <div class="sizing-item">
+          <div class="sizing-label">Плечо (Rec.)</div>
+          <div class="sizing-val up" id="sizeLev">1x</div>
+        </div>
+      </div>
     </div>
 
     <div class="levels">
@@ -138,8 +174,6 @@
     </div>
   </div>
 
-  <button class="btn-refresh" onclick="updateAllData()">Обновить терминал</button>
-
   <script>
     if (window.Telegram?.WebApp) {
       window.Telegram.WebApp.ready();
@@ -147,93 +181,130 @@
     }
 
     const BACKEND_URL = "https://btc-az-radar.duckdns.org:8443";
-    const SYMBOL = 'BTCUSDT';
+    let lastMarketData = null;
 
-    async function fetchTicker() {
-      const res = await fetch(`https://fapi.binance.com/fapi/v1/ticker/24hr?symbol=${SYMBOL}`);
-      return await res.json();
-    }
-
-    async function fetchRiskEngine() {
-      const res = await fetch(`${BACKEND_URL}/api/predict`);
-      return await res.json();
-    }
-
-    async function updateAllData() {
+    // 1. Потоковое получение котировок Binance (Web-клиент)
+    async function syncTicker() {
       try {
-        const [ticker, data] = await Promise.all([fetchTicker(), fetchRiskEngine()]);
-
-        if (data.status === "INITIALIZING") return;
-
-        // Биржевые котировки
-        const price = parseFloat(ticker.lastPrice);
-        const change = parseFloat(ticker.priceChangePercent);
+        const res = await fetch("https://fapi.binance.com/fapi/v1/ticker/24hr?symbol=BTCUSDT");
+        const t = await res.json();
+        const price = parseFloat(t.lastPrice);
+        const change = parseFloat(t.priceChangePercent);
+        
         document.getElementById('btcPrice').innerText = '$' + price.toLocaleString('en-US', { minimumFractionDigits: 1 });
-        const changeEl = document.getElementById('btcChange');
-        changeEl.innerText = (change >= 0 ? '+' : '') + change.toFixed(2) + '% (24h)';
-        changeEl.className = 'change ' + (change >= 0 ? 'up' : 'down');
+        const cEl = document.getElementById('btcChange');
+        cEl.innerText = (change >= 0 ? '+' : '') + change.toFixed(2) + '% (24h)';
+        cEl.className = 'change ' + (change >= 0 ? 'up' : 'down');
+      } catch (e) {
+        console.warn("Сбой тикера Binance:", e);
+      }
+    }
+    syncTicker();
+    setInterval(syncTicker, 5000);
 
-        // Микроструктура и фильтры
-        document.getElementById('regimeVal').innerText = data.market_regime;
-        
-        const htfEl = document.getElementById('htfVal');
-        htfEl.innerText = data.htf_trend_1h;
-        htfEl.className = 'metric-value ' + (data.htf_trend_1h === 'BULLISH' ? 'up' : (data.htf_trend_1h === 'BEARISH' ? 'down' : 'neutral'));
+    // 2. Локальный пересчет позиции под введенный депозит
+    function recalcPosition() {
+      if (!lastMarketData) return;
+      const depo = parseFloat(document.getElementById('depoInput').value) || 1000;
+      const score = lastMarketData.trade_score;
+      const price = lastMarketData.price;
+      const sl = lastMarketData.stop_loss;
 
-        document.getElementById('chopVal').innerText = data.metrics.choppiness_index;
-        
-        const deltaEl = document.getElementById('deltaVal');
-        deltaEl.innerText = (data.metrics.delta_ratio > 0 ? '+' : '') + data.metrics.delta_ratio + '%';
-        deltaEl.className = 'metric-value ' + (data.metrics.delta_ratio > 0 ? 'up' : 'down');
+      const riskPct = score > 80 ? 1.0 : (score > 60 ? 0.5 : 0.0);
+      const riskUsd = depo * (riskPct / 100);
 
-        // Риск-скоринг
-        const score = data.trade_score;
-        const scoreEl = document.getElementById('scoreBadge');
-        const scoreBar = document.getElementById('scoreBar');
-        scoreEl.innerText = `Score: ${score}/100`;
-        scoreBar.style.width = `${score}%`;
+      document.getElementById('sizeRisk').innerText = `$${riskUsd.toFixed(2)} (${riskPct}%)`;
 
-        let themeClass = 'neutral';
-        let barColor = 'var(--accent-yellow)';
-        if (score >= 70) {
-          themeClass = 'up';
-          barColor = 'var(--accent-green)';
-        } else if (score <= 30) {
-          themeClass = 'down';
-          barColor = 'var(--accent-red)';
-        }
+      if (sl > 0 && price > 0 && Math.abs(price - sl) > 0) {
+        const slDist = Math.abs(price - sl);
+        const posBtc = riskUsd / slDist;
+        const posUsd = posBtc * price;
+        const lev = Math.max(1, Math.min(20, Math.round(posUsd / depo)));
 
-        scoreEl.className = `score-badge ${themeClass}`;
-        scoreBar.style.backgroundColor = barColor;
-
-        const actionEl = document.getElementById('actionVal');
-        actionEl.innerText = data.action;
-        actionEl.className = `action-tag ${themeClass}`;
-
-        document.getElementById('riskRec').innerText = data.risk_recommendation;
-
-        // Драйверы риска
-        const driversList = document.getElementById('driversList');
-        if (data.risk_drivers && data.risk_drivers.length > 0) {
-          driversList.innerHTML = data.risk_drivers.map(d => 
-            `<div class="driver-item"><div class="driver-dot"></div><span>${d}</span></div>`
-          ).join('');
-        } else {
-          driversList.innerHTML = '<span style="color: var(--text-muted);">Критических рисков не выявлено</span>';
-        }
-
-        // Уровни
-        document.getElementById('tpLevel').innerText = data.take_profit > 0 ? '$' + data.take_profit.toLocaleString() : '---';
-        document.getElementById('slLevel').innerText = data.stop_loss > 0 ? '$' + data.stop_loss.toLocaleString() : '---';
-        document.getElementById('invLevel').innerText = data.structural_invalidation > 0 ? '$' + data.structural_invalidation.toLocaleString() : '---';
-
-      } catch (err) {
-        console.warn("Сетевой пропуск тика:", err);
+        document.getElementById('sizeUsd').innerText = `$${Math.round(posUsd)} (${posBtc.toFixed(3)} BTC)`;
+        document.getElementById('sizeLev').innerText = `${lev}x`;
+      } else {
+        document.getElementById('sizeUsd').innerText = "$0.00";
+        document.getElementById('sizeLev').innerText = "1x";
       }
     }
 
-    updateAllData();
-    setInterval(updateAllData, 3500);
+    // 3. Подключение к серверному стриму SSE
+    function initSSEStream() {
+      const source = new EventSource(`${BACKEND_URL}/api/stream`);
+
+      source.onmessage = function(event) {
+        try {
+          const data = JSON.parse(event.data);
+          if (data.status === "INITIALIZING") return;
+          lastMarketData = data;
+
+          // Режим и старший тренд
+          document.getElementById('regimeVal').innerText = data.market_regime;
+          const htf = document.getElementById('htfVal');
+          htf.innerText = data.htf_trend_1h;
+          htf.className = 'metric-value ' + (data.htf_trend_1h === 'BULLISH' ? 'up' : (data.htf_trend_1h === 'BEARISH' ? 'down' : 'neutral'));
+          
+          document.getElementById('chopVal').innerText = data.metrics.choppiness_index;
+
+          // Стакан (Imbalance)
+          const imb = data.metrics.book_imbalance;
+          const imbEl = document.getElementById('imbalanceVal');
+          imbEl.innerText = (imb > 0 ? '+' : '') + imb + '%';
+          imbEl.className = 'metric-value ' + (imb > 0 ? 'up' : (imb < 0 ? 'down' : 'neutral'));
+          
+          // Пропорция стакана: нормируем от [-100, 100] к [0, 100]
+          const bidsPct = Math.max(10, Math.min(90, 50 + (imb / 2)));
+          document.getElementById('barBids').style.width = `${bidsPct}%`;
+          document.getElementById('barAsks').style.width = `${100 - bidsPct}%`;
+
+          // Скоринг готовности
+          const score = data.trade_score;
+          const sBadge = document.getElementById('scoreBadge');
+          const sBar = document.getElementById('scoreBar');
+          sBadge.innerText = `Score: ${score}/100`;
+          sBar.style.width = `${score}%`;
+
+          let cls = 'neutral', barCol = 'var(--accent-yellow)';
+          if (score >= 70) { cls = 'up'; barCol = 'var(--accent-green)'; }
+          else if (score <= 30) { cls = 'down'; barCol = 'var(--accent-red)'; }
+
+          sBadge.className = `score-badge ${cls}`;
+          sBar.style.backgroundColor = barCol;
+
+          const actEl = document.getElementById('actionVal');
+          actEl.innerText = data.action;
+          actEl.className = `action-tag ${cls}`;
+
+          // Драйверы
+          const dList = document.getElementById('driversList');
+          if (data.risk_drivers && data.risk_drivers.length > 0) {
+            dList.innerHTML = data.risk_drivers.map(d => 
+              `<div class="driver-item"><div class="driver-dot"></div><span>${d}</span></div>`
+            ).join('');
+          } else {
+            dList.innerHTML = '<span style="color: var(--text-muted);">Баланс параметров: аномалий нет</span>';
+          }
+
+          // Уровни
+          document.getElementById('tpLevel').innerText = data.take_profit > 0 ? '$' + data.take_profit.toLocaleString() : '---';
+          document.getElementById('slLevel').innerText = data.stop_loss > 0 ? '$' + data.stop_loss.toLocaleString() : '---';
+          document.getElementById('invLevel').innerText = data.structural_invalidation > 0 ? '$' + data.structural_invalidation.toLocaleString() : '---';
+
+          // Пересчет сайзинга
+          recalcPosition();
+
+        } catch (err) {
+          console.error("Ошибка парсинга пакета SSE:", err);
+        }
+      };
+
+      source.onerror = function(err) {
+        console.warn("Стримовое соединение прервано, переподключение...", err);
+      };
+    }
+
+    initSSEStream();
   </script>
 </body>
 </html>
