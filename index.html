@@ -3,182 +3,433 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>BTC Pro Risk Terminal</title>
+  <title>BTC Pro Terminal</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg: #0b0e14;
-      --card-bg: #161b26;
-      --card-inner: #10141d;
-      --text: #ffffff;
-      --text-muted: #8b949e;
-      --accent-green: #00f092;
-      --accent-red: #ff3b69;
-      --accent-yellow: #f5a623;
-      --accent-blue: #2f80ed;
-      --border: #242c3d;
+      --bg: #080a0f;
+      --panel: #0f131c;
+      --panel-alt: #141a26;
+      --border: #1e2638;
+      --border-focus: #2d3852;
+      --text: #f0f4fc;
+      --text-dim: #79859c;
+      --text-dark: #4d576d;
+      --green: #00f298;
+      --green-dim: rgba(0, 242, 152, 0.12);
+      --red: #ff3366;
+      --red-dim: rgba(255, 51, 102, 0.12);
+      --yellow: #ffb800;
+      --yellow-dim: rgba(255, 184, 0, 0.12);
+      --blue: #3a86ff;
     }
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
-    body { background-color: var(--bg); color: var(--text); padding: 12px; min-height: 100vh; }
-    
-    .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-    .title { font-size: 1.05rem; font-weight: 700; letter-spacing: 0.5px; }
-    .badge-live { display: inline-flex; align-items: center; gap: 6px; font-size: 0.7rem; color: var(--accent-green); background: rgba(0, 240, 146, 0.1); padding: 3px 8px; border-radius: 10px; }
-    .dot { width: 6px; height: 6px; background: var(--accent-green); border-radius: 50%; animation: pulse 1.5s infinite; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: 'Plus Jakarta Sans', -apple-system, sans-serif;
+      padding: 12px;
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+    }
+    .mono { font-family: 'JetBrains Mono', monospace; }
+
+    /* Top Bar */
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 4px 2px 12px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 12px;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.95rem;
+      font-weight: 800;
+      letter-spacing: -0.3px;
+    }
+    .brand-tag {
+      background: var(--blue);
+      color: #fff;
+      font-size: 0.6rem;
+      padding: 2px 5px;
+      border-radius: 4px;
+      font-weight: 700;
+    }
+    .stream-status {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.68rem;
+      color: var(--green);
+      background: var(--green-dim);
+      padding: 3px 8px;
+      border-radius: 20px;
+      border: 1px solid rgba(0, 242, 152, 0.2);
+    }
+    .pulse-dot {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: var(--green);
+      box-shadow: 0 0 6px var(--green);
+      animation: pulse 1.4s infinite;
+    }
     @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } }
 
-    .card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 14px; padding: 12px; margin-bottom: 10px; }
-    
-    .price-box { text-align: center; padding: 8px 0; }
-    .symbol { font-size: 0.75rem; color: var(--text-muted); letter-spacing: 1px; }
-    .price { font-size: 2rem; font-weight: 800; margin: 2px 0; }
-    .change { font-size: 0.85rem; font-weight: 600; }
-    
-    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px; }
-    .metric { background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 10px; }
-    .metric-title { font-size: 0.68rem; color: var(--text-muted); margin-bottom: 3px; }
-    .metric-value { font-size: 0.95rem; font-weight: 700; }
-    
-    /* Imbalance Bar */
-    .imbalance-wrapper { margin-top: 6px; }
-    .imbalance-bar { display: flex; height: 6px; border-radius: 3px; overflow: hidden; background: #242c3d; }
-    .imbalance-bids { background: var(--accent-green); transition: width 0.3s; }
-    .imbalance-asks { background: var(--accent-red); transition: width 0.3s; }
+    /* Hero Price Matrix */
+    .hero-panel {
+      background: linear-gradient(180deg, var(--panel) 0%, rgba(15, 19, 28, 0.6) 100%);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px;
+      margin-bottom: 10px;
+    }
+    .hero-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.7rem;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .price-large {
+      font-size: 2.2rem;
+      font-weight: 800;
+      letter-spacing: -1px;
+      margin: 4px 0 2px;
+    }
+    .change-badge {
+      font-size: 0.78rem;
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
 
-    /* Absorption Banner */
-    .absorption-banner { display: none; background: rgba(245, 166, 35, 0.12); border: 1px solid var(--accent-yellow); border-radius: 8px; padding: 6px 10px; font-size: 0.72rem; margin-bottom: 8px; align-items: center; gap: 6px; }
+    /* Core Microstructure Grid */
+    .grid-2x2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+    .tile {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .tile-header {
+      font-size: 0.65rem;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+    .tile-value {
+      font-size: 1rem;
+      font-weight: 700;
+    }
+    .tile-sub {
+      font-size: 0.65rem;
+      color: var(--text-dark);
+      margin-top: 4px;
+    }
 
-    /* Risk Engine Card */
-    .risk-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-    .action-tag { font-size: 1.1rem; font-weight: 800; }
-    .score-badge { font-size: 0.75rem; font-weight: 700; padding: 2px 8px; border-radius: 6px; }
+    /* Flow Bar Visualizer */
+    .flow-bar-wrap {
+      margin-top: 6px;
+      height: 4px;
+      background: #182030;
+      border-radius: 2px;
+      overflow: hidden;
+      display: flex;
+    }
+    .flow-bar-buy { background: var(--green); height: 100%; transition: width 0.3s; }
+    .flow-bar-sell { background: var(--red); height: 100%; transition: width 0.3s; }
 
-    .bar-bg { width: 100%; height: 5px; background: var(--card-inner); border-radius: 3px; overflow: hidden; margin: 6px 0 10px; }
-    .bar-fill { height: 100%; width: 45%; transition: width 0.4s ease, background-color 0.4s ease; }
+    /* Executive Decision Terminal */
+    .terminal-card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px;
+      margin-bottom: 10px;
+    }
+    .term-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+    .action-headline {
+      font-size: 1.15rem;
+      font-weight: 800;
+      letter-spacing: -0.3px;
+    }
+    .score-pill {
+      font-size: 0.72rem;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 6px;
+      border: 1px solid transparent;
+    }
 
-    .drivers-box { background: var(--card-inner); border-radius: 8px; padding: 8px; margin: 8px 0; font-size: 0.72rem; }
-    .drivers-title { color: var(--text-muted); font-size: 0.65rem; text-transform: uppercase; margin-bottom: 4px; }
-    .driver-item { display: flex; align-items: center; gap: 6px; margin-bottom: 2px; }
-    .driver-dot { width: 4px; height: 4px; border-radius: 50%; background: var(--accent-yellow); flex-shrink: 0; }
+    /* Progress Meter */
+    .meter-rail {
+      width: 100%;
+      height: 5px;
+      background: #151a24;
+      border-radius: 4px;
+      overflow: hidden;
+      margin-bottom: 12px;
+    }
+    .meter-fill {
+      height: 100%;
+      width: 45%;
+      transition: width 0.5s ease;
+    }
 
-    /* Position Sizing Calculator */
-    .calc-box { background: var(--card-inner); border: 1px solid var(--border); border-radius: 10px; padding: 10px; margin-top: 10px; }
-    .calc-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-    .calc-title { font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; }
-    .depo-input-wrap { display: flex; align-items: center; gap: 4px; }
-    .depo-input { width: 70px; background: var(--card-bg); border: 1px solid var(--border); border-radius: 6px; color: #fff; font-size: 0.75rem; padding: 2px 6px; text-align: right; }
+    /* Risk Drivers List */
+    .reasons-box {
+      background: var(--panel-alt);
+      border-radius: 8px;
+      padding: 8px 10px;
+      margin-bottom: 12px;
+      border: 1px solid rgba(255,255,255,0.03);
+    }
+    .reasons-title {
+      font-size: 0.62rem;
+      text-transform: uppercase;
+      color: var(--text-dim);
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+    .reason-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.72rem;
+      color: #cfd8e8;
+      margin-bottom: 3px;
+    }
+    .reason-dot {
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      background: var(--yellow);
+      flex-shrink: 0;
+    }
 
-    .sizing-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; text-align: center; }
-    .sizing-item { background: var(--card-bg); border-radius: 6px; padding: 6px; }
-    .sizing-label { color: var(--text-muted); font-size: 0.62rem; margin-bottom: 2px; }
-    .sizing-val { font-size: 0.8rem; font-weight: 700; color: #fff; }
+    /* Institutional Sizing Desk */
+    .desk-box {
+      background: var(--panel-alt);
+      border-radius: 8px;
+      padding: 10px;
+      border: 1px solid var(--border);
+    }
+    .desk-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+    .desk-title {
+      font-size: 0.65rem;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      font-weight: 700;
+    }
+    .depo-chips {
+      display: flex;
+      gap: 4px;
+    }
+    .chip {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      color: var(--text-dim);
+      font-size: 0.62rem;
+      padding: 2px 6px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+    .chip.active {
+      background: var(--blue);
+      color: #fff;
+      border-color: var(--blue);
+    }
+    .desk-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 6px;
+      text-align: center;
+    }
+    .desk-item {
+      background: var(--panel);
+      padding: 6px;
+      border-radius: 6px;
+      border: 1px solid rgba(255,255,255,0.02);
+    }
+    .desk-label {
+      font-size: 0.6rem;
+      color: var(--text-dim);
+      margin-bottom: 2px;
+    }
+    .desk-val {
+      font-size: 0.8rem;
+      font-weight: 700;
+    }
 
-    .levels { margin-top: 10px; padding-top: 8px; border-top: 1px dashed var(--border); display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; font-size: 0.72rem; }
-    .level-item { display: flex; flex-direction: column; }
-    .level-label { color: var(--text-muted); font-size: 0.65rem; }
-    .level-val { font-weight: 700; margin-top: 2px; }
+    /* Execution Targets */
+    .targets-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 6px;
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px dashed var(--border);
+      text-align: center;
+    }
+    .target-col { display: flex; flex-direction: column; }
+    .target-lbl { font-size: 0.6rem; color: var(--text-dim); }
+    .target-val { font-size: 0.8rem; font-weight: 700; margin-top: 2px; }
 
-    .up { color: var(--accent-green); }
-    .down { color: var(--accent-red); }
-    .neutral { color: var(--accent-yellow); }
+    /* Utilities */
+    .c-green { color: var(--green); }
+    .c-red { color: var(--red); }
+    .c-yellow { color: var(--yellow); }
+    .bg-green { background: var(--green); }
+    .bg-red { background: var(--red); }
+    .bg-yellow { background: var(--yellow); }
   </style>
 </head>
 <body>
 
-  <div class="header">
-    <div class="title">BTC Risk Terminal</div>
-    <div class="badge-live"><div class="dot"></div> REALTIME FLOW</div>
-  </div>
-
-  <div class="card price-box">
-    <div class="symbol">BTC/USDT PERPETUAL</div>
-    <div class="price" id="btcPrice">---.--</div>
-    <div class="change" id="btcChange">0.00%</div>
-  </div>
-
-  <div class="grid">
-    <div class="metric">
-      <div class="metric-title">Market Regime (15m/1h)</div>
-      <div class="metric-value" id="regimeVal" style="font-size: 0.78rem;">---</div>
+  <div class="top-bar">
+    <div class="brand">
+      <span>QUANT MATRIX</span>
+      <span class="brand-tag">PRO</span>
     </div>
-    <div class="metric">
-      <div class="metric-title">CVD Flow (60s Delta)</div>
-      <div class="metric-value" id="cvdVal">0.0 BTC</div>
-      <div style="font-size: 0.65rem; color: var(--text-muted); margin-top: 2px;" id="speedVal">0 сделок/мин</div>
-    </div>
-    <div class="metric">
-      <div class="metric-title">HTF Trend (1h EMA)</div>
-      <div class="metric-value" id="htfVal">---</div>
-    </div>
-    <div class="metric">
-      <div class="metric-title">Orderbook Imbalance</div>
-      <div class="metric-value" id="imbalanceVal">0%</div>
-      <div class="imbalance-wrapper">
-        <div class="imbalance-bar">
-          <div class="imbalance-bids" id="barBids" style="width: 50%;"></div>
-          <div class="imbalance-asks" id="barAsks" style="width: 50%;"></div>
-        </div>
-      </div>
+    <div class="stream-status">
+      <div class="pulse-dot"></div>
+      <span id="latencyTag">STREAM ACTIVE</span>
     </div>
   </div>
 
-  <div id="absorptionAlert" class="absorption-banner">
-    <span>⚠️</span>
-    <span id="absorptionText">Лимитное поглощение айсбергами</span>
+  <div class="hero-panel">
+    <div class="hero-meta">
+      <span>BTC/USDT • PERP CONTRACT</span>
+      <span id="volatilityTag" class="mono">ATR: --</span>
+    </div>
+    <div class="price-large mono" id="btcPrice">------.-</div>
+    <div class="change-badge mono" id="btcChange">0.00% (24h)</div>
   </div>
 
-  <div class="card">
-    <div class="risk-header">
-      <div class="action-tag" id="actionVal">ПОДКЛЮЧЕНИЕ...</div>
-      <div class="score-badge" id="scoreBadge">Score: --</div>
+  <div class="grid-2x2">
+    <!-- CVD Flow -->
+    <div class="tile">
+      <div class="tile-header">Order Flow (60s Delta)</div>
+      <div class="tile-value mono" id="cvdVal">0.00 BTC</div>
+      <div class="flow-bar-wrap">
+        <div class="flow-bar-buy" id="barBuy" style="width: 50%;"></div>
+        <div class="flow-bar-sell" id="barSell" style="width: 50%;"></div>
+      </div>
+      <div class="tile-sub mono" id="speedVal">-- trades/min</div>
     </div>
 
-    <div class="bar-bg">
-      <div class="bar-fill" id="scoreBar"></div>
+    <!-- Orderbook Imbalance -->
+    <div class="tile">
+      <div class="tile-header">Depth Imbalance (L2)</div>
+      <div class="tile-value mono" id="imbalanceVal">0.0%</div>
+      <div class="flow-bar-wrap">
+        <div class="flow-bar-buy" id="bookBids" style="width: 50%;"></div>
+        <div class="flow-bar-sell" id="bookAsks" style="width: 50%;"></div>
+      </div>
+      <div class="tile-sub mono" id="bookDesc">Bids vs Asks</div>
     </div>
 
-    <div class="drivers-box">
-      <div class="drivers-title">Драйверы риска & микроструктура</div>
-      <div id="driversList">Ожидание первого потокового пакета...</div>
+    <!-- Market Regime -->
+    <div class="tile">
+      <div class="tile-header">Market Regime</div>
+      <div class="tile-value" id="regimeVal" style="font-size: 0.85rem;">CALCULATING...</div>
+      <div class="tile-sub mono" id="chopVal">Chop Index: --</div>
     </div>
 
-    <!-- Калькулятор риска -->
-    <div class="calc-box">
-      <div class="calc-header">
-        <span class="calc-title">Калькулятор мани-менеджмента</span>
-        <div class="depo-input-wrap">
-          <span style="font-size: 0.72rem; color: var(--text-muted);">$</span>
-          <input type="number" id="depoInput" class="depo-input" value="1000" min="10" step="50" oninput="recalcPosition()" />
+    <!-- HTF Bias -->
+    <div class="tile">
+      <div class="tile-header">1H HTF Alignment</div>
+      <div class="tile-value" id="htfVal">---</div>
+      <div class="tile-sub mono">EMA 50 / 200 Cluster</div>
+    </div>
+  </div>
+
+  <div class="terminal-card">
+    <div class="term-top">
+      <div class="action-headline" id="actionVal">INITIALIZING...</div>
+      <div class="score-pill mono" id="scorePill">SCORE: --</div>
+    </div>
+
+    <div class="meter-rail">
+      <div class="meter-fill" id="meterFill"></div>
+    </div>
+
+    <div class="reasons-box">
+      <div class="reasons-title">Микроструктурный аудит</div>
+      <div id="reasonsList">Сбор агрегированных потоков...</div>
+    </div>
+
+    <!-- Sizing Desk -->
+    <div class="desk-box">
+      <div class="desk-header">
+        <span class="desk-title">Risk Allocation Desk</span>
+        <div class="depo-chips">
+          <span class="chip" onclick="setDepo(500)">$500</span>
+          <span class="chip active" id="chip1k" onclick="setDepo(1000)">$1K</span>
+          <span class="chip" onclick="setDepo(5000)">$5K</span>
+          <span class="chip" onclick="setDepo(10000)">$10K</span>
         </div>
       </div>
-      <div class="sizing-grid">
-        <div class="sizing-item">
-          <div class="sizing-label">Макс. Риск</div>
-          <div class="sizing-val down" id="sizeRisk">$0.00</div>
+      <div class="desk-grid">
+        <div class="desk-item">
+          <div class="desk-label">Risk Exposure</div>
+          <div class="desk-val mono c-red" id="riskUsd">$0.00</div>
         </div>
-        <div class="sizing-item">
-          <div class="sizing-label">Размер позиции</div>
-          <div class="sizing-val" id="sizeUsd">$0.00</div>
+        <div class="desk-item">
+          <div class="desk-label">Position Size</div>
+          <div class="desk-val mono" id="posUsd">$0.00</div>
         </div>
-        <div class="sizing-item">
-          <div class="sizing-label">Плечо (Rec.)</div>
-          <div class="sizing-val up" id="sizeLev">1x</div>
+        <div class="desk-item">
+          <div class="desk-label">Rec. Leverage</div>
+          <div class="desk-val mono c-green" id="recLev">1x</div>
         </div>
       </div>
     </div>
 
-    <div class="levels">
-      <div class="level-item">
-        <span class="level-label">Take Profit</span>
-        <span class="level-val up" id="tpLevel">---</span>
+    <!-- Targets -->
+    <div class="targets-row">
+      <div class="target-col">
+        <span class="target-lbl">Take Profit</span>
+        <span class="target-val mono c-green" id="tpVal">---</span>
       </div>
-      <div class="level-item">
-        <span class="level-label">Stop Loss</span>
-        <span class="level-val down" id="slLevel">---</span>
+      <div class="target-col">
+        <span class="target-lbl">Stop Loss</span>
+        <span class="target-val mono c-red" id="slVal">---</span>
       </div>
-      <div class="level-item">
-        <span class="level-label">Слом структуры</span>
-        <span class="level-val" style="color: #ff9f43;" id="invLevel">---</span>
+      <div class="target-col">
+        <span class="target-lbl">Invalidation</span>
+        <span class="target-val mono c-yellow" id="invVal">---</span>
       </div>
     </div>
   </div>
@@ -190,146 +441,150 @@
     }
 
     const BACKEND_URL = "https://btc-az-radar.duckdns.org:8443";
-    let lastMarketData = null;
+    let lastData = null;
+    let currentDepo = 1000;
 
-    async function syncTicker() {
+    function setDepo(val) {
+      currentDepo = val;
+      document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+      event.target.classList.add('active');
+      recalcSizing();
+    }
+
+    async function syncPrice() {
       try {
         const res = await fetch("https://fapi.binance.com/fapi/v1/ticker/24hr?symbol=BTCUSDT");
         const t = await res.json();
-        const price = parseFloat(t.lastPrice);
-        const change = parseFloat(t.priceChangePercent);
+        const p = parseFloat(t.lastPrice);
+        const c = parseFloat(t.priceChangePercent);
         
-        document.getElementById('btcPrice').innerText = '$' + price.toLocaleString('en-US', { minimumFractionDigits: 1 });
+        document.getElementById('btcPrice').innerText = '$' + p.toLocaleString('en-US', { minimumFractionDigits: 1 });
         const cEl = document.getElementById('btcChange');
-        cEl.innerText = (change >= 0 ? '+' : '') + change.toFixed(2) + '% (24h)';
-        cEl.className = 'change ' + (change >= 0 ? 'up' : 'down');
-      } catch (e) {
-        console.warn("Сбой тикера Binance:", e);
-      }
+        cEl.innerText = (c >= 0 ? '+' : '') + c.toFixed(2) + '% (24h)';
+        cEl.className = 'change-badge mono ' + (c >= 0 ? 'c-green' : 'c-red');
+      } catch (e) {}
     }
-    syncTicker();
-    setInterval(syncTicker, 5000);
+    syncPrice();
+    setInterval(syncPrice, 4000);
 
-    function recalcPosition() {
-      if (!lastMarketData) return;
-      const depo = parseFloat(document.getElementById('depoInput').value) || 1000;
-      const score = lastMarketData.trade_score;
-      const price = lastMarketData.price;
-      const sl = lastMarketData.stop_loss;
+    function recalcSizing() {
+      if (!lastData) return;
+      const score = lastData.trade_score;
+      const price = lastData.price;
+      const sl = lastData.stop_loss;
 
       const riskPct = score >= 80 ? 1.0 : (score > 60 ? 0.5 : 0.0);
-      const riskUsd = depo * (riskPct / 100);
+      const riskUsd = currentDepo * (riskPct / 100);
 
-      document.getElementById('sizeRisk').innerText = `$${riskUsd.toFixed(2)} (${riskPct}%)`;
+      document.getElementById('riskUsd').innerText = `$${riskUsd.toFixed(2)} (${riskPct}%)`;
 
       if (sl > 0 && price > 0 && Math.abs(price - sl) > 0) {
-        const slDist = Math.abs(price - sl);
-        const posBtc = riskUsd / slDist;
-        const posUsd = posBtc * price;
-        const lev = Math.max(1, Math.min(20, Math.round(posUsd / depo)));
+        const dist = Math.abs(price - sl);
+        const btcSize = riskUsd / dist;
+        const usdSize = btcSize * price;
+        const lev = Math.max(1, Math.min(20, Math.round(usdSize / currentDepo)));
 
-        document.getElementById('sizeUsd').innerText = `$${Math.round(posUsd)} (${posBtc.toFixed(3)} BTC)`;
-        document.getElementById('sizeLev').innerText = `${lev}x`;
+        document.getElementById('posUsd').innerText = `$${Math.round(usdSize)}`;
+        document.getElementById('recLev').innerText = `${lev}x`;
       } else {
-        document.getElementById('sizeUsd').innerText = "$0.00";
-        document.getElementById('sizeLev').innerText = "1x";
+        document.getElementById('posUsd').innerText = "$0.00";
+        document.getElementById('recLev').innerText = "1x";
       }
     }
 
-    function initSSEStream() {
+    function initStream() {
       const source = new EventSource(`${BACKEND_URL}/api/stream`);
 
-      source.onmessage = function(event) {
+      source.onmessage = (event) => {
         try {
-          const data = JSON.parse(event.data);
-          if (data.status === "INITIALIZING") return;
-          lastMarketData = data;
+          const d = JSON.parse(event.data);
+          if (d.status === "INITIALIZING") return;
+          lastData = d;
 
-          // Режим и старший тренд
-          document.getElementById('regimeVal').innerText = data.market_regime;
-          const htf = document.getElementById('htfVal');
-          htf.innerText = data.htf_trend_1h;
-          htf.className = 'metric-value ' + (data.htf_trend_1h === 'BULLISH' ? 'up' : (data.htf_trend_1h === 'BEARISH' ? 'down' : 'neutral'));
+          document.getElementById('volatilityTag').innerText = `ATR: $${d.metrics.atr_volatility}`;
 
-          // CVD Flow и скорость ленты
-          const cvd = data.metrics.cvd_flow_btc;
+          // Flow (CVD)
+          const cvd = d.metrics.cvd_flow_btc;
           const cvdEl = document.getElementById('cvdVal');
           cvdEl.innerText = (cvd > 0 ? '+' : '') + cvd.toFixed(2) + ' BTC';
-          cvdEl.className = 'metric-value ' + (cvd > 0 ? 'up' : (cvd < 0 ? 'down' : 'neutral'));
-          document.getElementById('speedVal').innerText = `${data.metrics.trade_speed_tpm} сделок/мин`;
+          cvdEl.className = 'tile-value mono ' + (cvd > 0 ? 'c-green' : (cvd < 0 ? 'c-red' : ''));
 
-          // Баннер айсберг-поглощения
-          const absBox = document.getElementById('absorptionAlert');
-          const absTxt = document.getElementById('absorptionText');
-          if (data.metrics.absorption_state === "BULLISH_ABSORPTION") {
-            absBox.style.display = 'flex';
-            absBox.style.borderColor = 'var(--accent-green)';
-            absTxt.innerText = "Лимитное поглощение продаж (Кит удерживает Bid)";
-          } else if (data.metrics.absorption_state === "BEARISH_ABSORPTION") {
-            absBox.style.display = 'flex';
-            absBox.style.borderColor = 'var(--accent-red)';
-            absTxt.innerText = "Лимитное поглощение покупок (Кит удерживает Ask)";
-          } else {
-            absBox.style.display = 'none';
-          }
+          const buyVol = d.metrics.buy_vol || 1;
+          const sellVol = d.metrics.sell_vol || 1;
+          const buyPct = Math.max(15, Math.min(85, (buyVol / (buyVol + sellVol)) * 100));
+          document.getElementById('barBuy').style.width = `${buyPct}%`;
+          document.getElementById('barSell').style.width = `${100 - buyPct}%`;
+          document.getElementById('speedVal').innerText = `${d.metrics.trade_speed_tpm} trades/min`;
 
-          // Стакан (Imbalance)
-          const imb = data.metrics.book_imbalance;
+          // Orderbook
+          const imb = d.metrics.book_imbalance;
           const imbEl = document.getElementById('imbalanceVal');
           imbEl.innerText = (imb > 0 ? '+' : '') + imb + '%';
-          imbEl.className = 'metric-value ' + (imb > 0 ? 'up' : (imb < 0 ? 'down' : 'neutral'));
+          imbEl.className = 'tile-value mono ' + (imb > 0 ? 'c-green' : (imb < 0 ? 'c-red' : ''));
+
+          const bPct = Math.max(15, Math.min(85, 50 + (imb / 2)));
+          document.getElementById('bookBids').style.width = `${bPct}%`;
+          document.getElementById('bookAsks').style.width = `${100 - bPct}%`;
+
+          // Regime & HTF
+          document.getElementById('regimeVal').innerText = d.market_regime;
+          document.getElementById('chopVal').innerText = `Chop: ${d.metrics.choppiness_index}`;
           
-          const bidsPct = Math.max(10, Math.min(90, 50 + (imb / 2)));
-          document.getElementById('barBids').style.width = `${bidsPct}%`;
-          document.getElementById('barAsks').style.width = `${100 - bidsPct}%`;
+          const htfEl = document.getElementById('htfVal');
+          htfEl.innerText = d.htf_trend_1h;
+          htfEl.className = 'tile-value ' + (d.htf_trend_1h === 'BULLISH' ? 'c-green' : (d.htf_trend_1h === 'BEARISH' ? 'c-red' : 'c-yellow'));
 
-          // Скоринг готовности
-          const score = data.trade_score;
-          const sBadge = document.getElementById('scoreBadge');
-          const sBar = document.getElementById('scoreBar');
-          sBadge.innerText = `Score: ${score}/100`;
-          sBar.style.width = `${score}%`;
+          // Score & Action
+          const score = d.trade_score;
+          const pill = document.getElementById('scorePill');
+          const meter = document.getElementById('meterFill');
+          const act = document.getElementById('actionVal');
 
-          let cls = 'neutral', barCol = 'var(--accent-yellow)';
-          if (score >= 70) { cls = 'up'; barCol = 'var(--accent-green)'; }
-          else if (score <= 30) { cls = 'down'; barCol = 'var(--accent-red)'; }
+          pill.innerText = `SCORE: ${score}/100`;
+          meter.style.width = `${score}%`;
+          act.innerText = d.action;
 
-          sBadge.className = `score-badge ${cls}`;
-          sBar.style.backgroundColor = barCol;
-
-          const actEl = document.getElementById('actionVal');
-          actEl.innerText = data.action;
-          actEl.className = `action-tag ${cls}`;
-
-          // Драйверы
-          const dList = document.getElementById('driversList');
-          if (data.risk_drivers && data.risk_drivers.length > 0) {
-            dList.innerHTML = data.risk_drivers.map(d => 
-              `<div class="driver-item"><div class="driver-dot"></div><span>${d}</span></div>`
-            ).join('');
+          if (score >= 75) {
+            pill.style.background = 'var(--green-dim)';
+            pill.style.color = 'var(--green)';
+            pill.style.borderColor = 'rgba(0,242,152,0.3)';
+            meter.style.background = 'var(--green)';
+            act.className = 'action-headline c-green';
+          } else if (score <= 35) {
+            pill.style.background = 'var(--red-dim)';
+            pill.style.color = 'var(--red)';
+            pill.style.borderColor = 'rgba(255,51,102,0.3)';
+            meter.style.background = 'var(--red)';
+            act.className = 'action-headline c-red';
           } else {
-            dList.innerHTML = '<span style="color: var(--text-muted);">Баланс параметров: аномалий нет</span>';
+            pill.style.background = 'var(--yellow-dim)';
+            pill.style.color = 'var(--yellow)';
+            pill.style.borderColor = 'rgba(255,184,0,0.3)';
+            meter.style.background = 'var(--yellow)';
+            act.className = 'action-headline c-yellow';
           }
 
-          // Уровни
-          document.getElementById('tpLevel').innerText = data.take_profit > 0 ? '$' + data.take_profit.toLocaleString() : '---';
-          document.getElementById('slLevel').innerText = data.stop_loss > 0 ? '$' + data.stop_loss.toLocaleString() : '---';
-          document.getElementById('invLevel').innerText = data.structural_invalidation > 0 ? '$' + data.structural_invalidation.toLocaleString() : '---';
+          // Drivers
+          const rList = document.getElementById('reasonsList');
+          if (d.risk_drivers && d.risk_drivers.length > 0) {
+            rList.innerHTML = d.risk_drivers.map(r => 
+              `<div class="reason-row"><div class="reason-dot"></div><span>${r}</span></div>`
+            ).join('');
+          } else {
+            rList.innerHTML = '<span style="color: var(--text-dark); font-size: 0.7rem;">Баланс параметров в норме</span>';
+          }
 
-          // Пересчет сайзинга под депозит
-          recalcPosition();
+          // Targets
+          document.getElementById('tpVal').innerText = d.take_profit > 0 ? '$' + d.take_profit.toLocaleString() : '---';
+          document.getElementById('slVal').innerText = d.stop_loss > 0 ? '$' + d.stop_loss.toLocaleString() : '---';
+          document.getElementById('invVal').innerText = d.structural_invalidation > 0 ? '$' + d.structural_invalidation.toLocaleString() : '---';
 
-        } catch (err) {
-          console.error("Ошибка парсинга пакета SSE:", err);
-        }
-      };
-
-      source.onerror = function(err) {
-        console.warn("Стримовое соединение прервано, переподключение...", err);
+          recalcSizing();
+        } catch (e) {}
       };
     }
 
-    initSSEStream();
+    initStream();
   </script>
 </body>
 </html>
