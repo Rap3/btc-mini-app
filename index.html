@@ -271,7 +271,7 @@
       flex-shrink: 0;
     }
 
-    /* Desk */
+    /* Desk с инпутом суммы депозита */
     .desk-box {
       background: var(--panel-alt);
       border-radius: 8px;
@@ -290,18 +290,42 @@
       text-transform: uppercase;
       font-weight: 700;
     }
-    .depo-chips { display: flex; gap: 4px; }
-    .chip {
+
+    .depo-input-container {
+      display: flex;
+      align-items: center;
       background: var(--panel);
       border: 1px solid var(--border);
-      color: var(--text-dim);
-      font-size: 0.6rem;
+      border-radius: 6px;
       padding: 2px 6px;
-      border-radius: 4px;
-      cursor: pointer;
-      font-weight: 600;
+      transition: border-color 0.2s;
     }
-    .chip.active { background: var(--blue); color: #fff; border-color: var(--blue); }
+    .depo-input-container:focus-within {
+      border-color: var(--blue);
+      box-shadow: 0 0 0 1px var(--blue);
+    }
+    .currency-prefix {
+      font-size: 0.72rem;
+      color: var(--text-dim);
+      font-weight: 700;
+      margin-right: 2px;
+    }
+    .depo-custom-input {
+      width: 68px;
+      background: transparent;
+      border: none;
+      outline: none;
+      color: #fff;
+      font-size: 0.78rem;
+      font-weight: 700;
+      text-align: right;
+    }
+    .depo-custom-input::-webkit-outer-spin-button,
+    .depo-custom-input::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+
     .desk-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; text-align: center; }
     .desk-item { background: var(--panel); padding: 5px; border-radius: 6px; }
     .desk-label { font-size: 0.58rem; color: var(--text-dim); margin-bottom: 2px; }
@@ -424,15 +448,22 @@
       <div id="reasonsList">Сбор агрегированных потоков...</div>
     </div>
 
-    <!-- Desk -->
+    <!-- Sizing Desk с ручным вводом суммы -->
     <div class="desk-box">
       <div class="desk-header">
         <span class="desk-title">Risk Allocation Desk</span>
-        <div class="depo-chips">
-          <span class="chip" onclick="setDepo(500, event)">$500</span>
-          <span class="chip active" id="chip1k" onclick="setDepo(1000, event)">$1K</span>
-          <span class="chip" onclick="setDepo(5000, event)">$5K</span>
-          <span class="chip" onclick="setDepo(10000, event)">$10K</span>
+        <div class="depo-input-container">
+          <span class="currency-prefix">$</span>
+          <input 
+            type="number" 
+            id="depoInputField" 
+            class="depo-custom-input mono" 
+            value="1000" 
+            min="10" 
+            max="10000" 
+            step="50"
+            oninput="handleCustomDepo(this.value)" 
+          />
         </div>
       </div>
       <div class="desk-grid">
@@ -486,15 +517,19 @@
     let lastData = null;
     let currentDepo = 1000;
 
-    function setDepo(val, evt) {
-      currentDepo = val;
+    function handleCustomDepo(val) {
+      let num = parseFloat(val);
+      if (isNaN(num) || num < 1) {
+        num = 1;
+      } else if (num > 10000) {
+        num = 10000;
+        document.getElementById('depoInputField').value = 10000;
+      }
+      currentDepo = num;
       triggerHaptic('light');
-      document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
-      evt.target.classList.add('active');
       recalcSizing();
     }
 
-    // Отрисовка микро-графика CVD
     function drawSparkline(points) {
       const cvs = document.getElementById('cvdCanvas');
       if (!cvs || !points || points.length < 2) return;
@@ -536,27 +571,47 @@
     setInterval(syncPrice, 3000);
 
     function recalcSizing() {
-      if (!lastData) return;
-      const score = lastData.trade_score;
-      const price = lastData.price;
-      const sl = lastData.stop_loss;
+      if (!lastData || !lastData.price) return;
 
-      const riskPct = score >= 80 ? 1.0 : (score > 60 ? 0.5 : 0.0);
+      const price = lastData.price;
+      const score = lastData.trade_score || 50;
+
+      // Если режим ожидания — рассчитываем сценарий под базовый риск 1%, иначе по скорингу
+      const isWaitMode = lastData.action && lastData.action.startsWith("WAIT");
+      const riskPct = isWaitMode ? 1.0 : (score >= 80 ? 1.0 : (score > 60 ? 0.5 : 0.0));
       const riskUsd = currentDepo * (riskPct / 100);
 
-      document.getElementById('riskUsd').innerText = `$${riskUsd.toFixed(2)} (${riskPct}%)`;
+      // Дистанция до стопа: при нулевом SL берем 1.2 * ATR
+      let sl = lastData.stop_loss;
+      const atr = (lastData.metrics && lastData.metrics.atr_volatility) ? lastData.metrics.atr_volatility : 50;
+      if (!sl || sl === 0) {
+        sl = price - (atr * 1.2);
+      }
 
-      if (sl > 0 && price > 0 && Math.abs(price - sl) > 0) {
-        const dist = Math.abs(price - sl);
-        const btcSize = riskUsd / dist;
-        const usdSize = btcSize * price;
-        const lev = Math.max(1, Math.min(20, Math.round(usdSize / currentDepo)));
+      const slDist = Math.abs(price - sl);
 
-        document.getElementById('posUsd').innerText = `$${Math.round(usdSize)}`;
+      if (slDist > 0 && price > 0) {
+        const posBtc = riskUsd / slDist;
+        const posUsd = posBtc * price;
+        const lev = Math.max(1, Math.min(20, Math.round(posUsd / currentDepo)));
+
+        document.getElementById('riskUsd').innerText = `$${riskUsd.toFixed(2)} (${riskPct}%)`;
+        document.getElementById('posUsd').innerText = `$${Math.round(posUsd).toLocaleString()} (${posBtc.toFixed(3)} BTC)`;
         document.getElementById('recLev').innerText = `${lev}x`;
-      } else {
-        document.getElementById('posUsd').innerText = "$0.00";
-        document.getElementById('recLev').innerText = "1x";
+
+        // Отображение ориентиров во флэте
+        if (!lastData.take_profit || lastData.take_profit === 0) {
+          document.getElementById('tpVal').innerText = `~$${Math.round(price + (atr * 2.2)).toLocaleString()}`;
+          document.getElementById('tpVal').style.opacity = '0.5';
+          document.getElementById('slVal').innerText = `~$${Math.round(sl).toLocaleString()}`;
+          document.getElementById('slVal').style.opacity = '0.5';
+          document.getElementById('invVal').innerText = `~$${Math.round(sl - 25).toLocaleString()}`;
+          document.getElementById('invVal').style.opacity = '0.5';
+        } else {
+          document.getElementById('tpVal').style.opacity = '1';
+          document.getElementById('slVal').style.opacity = '1';
+          document.getElementById('invVal').style.opacity = '1';
+        }
       }
     }
 
@@ -662,9 +717,18 @@
         }
 
         // Targets
-        document.getElementById('tpVal').innerText = d.take_profit > 0 ? '$' + Math.round(d.take_profit).toLocaleString() : '---';
-        document.getElementById('slVal').innerText = d.stop_loss > 0 ? '$' + Math.round(d.stop_loss).toLocaleString() : '---';
-        document.getElementById('invVal').innerText = d.structural_invalidation > 0 ? '$' + Math.round(d.structural_invalidation).toLocaleString() : '---';
+        if (d.take_profit > 0) {
+          document.getElementById('tpVal').innerText = '$' + Math.round(d.take_profit).toLocaleString();
+          document.getElementById('tpVal').style.opacity = '1';
+        }
+        if (d.stop_loss > 0) {
+          document.getElementById('slVal').innerText = '$' + Math.round(d.stop_loss).toLocaleString();
+          document.getElementById('slVal').style.opacity = '1';
+        }
+        if (d.structural_invalidation > 0) {
+          document.getElementById('invVal').innerText = '$' + Math.round(d.structural_invalidation).toLocaleString();
+          document.getElementById('invVal').style.opacity = '1';
+        }
 
         recalcSizing();
 
