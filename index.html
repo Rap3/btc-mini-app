@@ -343,7 +343,7 @@
     </div>
     <div class="stream-status">
       <div class="pulse-dot"></div>
-      <span id="latencyTag">STREAM ACTIVE</span>
+      <span id="latencyTag">FEED 1.5S</span>
     </div>
   </div>
 
@@ -494,7 +494,7 @@
       } catch (e) {}
     }
     syncPrice();
-    setInterval(syncPrice, 4000);
+    setInterval(syncPrice, 3000);
 
     function recalcSizing() {
       if (!lastData) return;
@@ -521,109 +521,112 @@
       }
     }
 
-    function initStream() {
-      const source = new EventSource(`${BACKEND_URL}/api/stream`);
+    async function fetchBackendState() {
+      try {
+        const res = await fetch(`${BACKEND_URL}/api/predict`);
+        if (!res.ok) return;
+        const d = await res.json();
+        if (!d || d.status === "INITIALIZING" || !d.price) return;
+        lastData = d;
 
-      source.onmessage = (event) => {
-        try {
-          const d = JSON.parse(event.data);
-          if (d.status === "INITIALIZING") return;
-          lastData = d;
+        document.getElementById('volatilityTag').innerText = `ATR: $${d.metrics.atr_volatility}`;
 
-          document.getElementById('volatilityTag').innerText = `ATR: $${d.metrics.atr_volatility}`;
+        // Радар Ликвидности
+        if (d.liquidity_radar) {
+          const rad = d.liquidity_radar;
+          document.getElementById('radarBias').innerText = `BIAS: ${rad.magnet_bias}`;
+          document.getElementById('pdlVal').innerText = `Sell-side: $${Math.round(rad.pool_low_pdl).toLocaleString()}`;
+          document.getElementById('pdhVal').innerText = `Buy-side: $${Math.round(rad.pool_high_pdh).toLocaleString()}`;
+          document.getElementById('targetMagnet').innerText = `Target: $${Math.round(rad.magnet_target).toLocaleString()}`;
+          document.getElementById('trackPointer').style.left = `${rad.range_position_pct}%`;
+        }
 
-          // Радар Ликвидности
-          if (d.liquidity_radar) {
-            const rad = d.liquidity_radar;
-            document.getElementById('radarBias').innerText = `BIAS: ${rad.magnet_bias}`;
-            document.getElementById('pdlVal').innerText = `Sell-side: $${rad.pool_low_pdl.toLocaleString()}`;
-            document.getElementById('pdhVal').innerText = `Buy-side: $${rad.pool_high_pdh.toLocaleString()}`;
-            document.getElementById('targetMagnet').innerText = `Target: $${rad.magnet_target.toLocaleString()}`;
-            document.getElementById('trackPointer').style.left = `${rad.range_position_pct}%`;
-          }
+        // Flow (CVD)
+        const cvd = d.metrics.cvd_flow_btc;
+        const cvdEl = document.getElementById('cvdVal');
+        cvdEl.innerText = (cvd > 0 ? '+' : '') + cvd.toFixed(2) + ' BTC';
+        cvdEl.className = 'tile-value mono ' + (cvd > 0 ? 'c-green' : (cvd < 0 ? 'c-red' : ''));
 
-          // Flow (CVD)
-          const cvd = d.metrics.cvd_flow_btc;
-          const cvdEl = document.getElementById('cvdVal');
-          cvdEl.innerText = (cvd > 0 ? '+' : '') + cvd.toFixed(2) + ' BTC';
-          cvdEl.className = 'tile-value mono ' + (cvd > 0 ? 'c-green' : (cvd < 0 ? 'c-red' : ''));
+        const buyVol = d.metrics.buy_vol || 1;
+        const sellVol = d.metrics.sell_vol || 1;
+        const buyPct = Math.max(15, Math.min(85, (buyVol / (buyVol + sellVol)) * 100));
+        document.getElementById('barBuy').style.width = `${buyPct}%`;
+        document.getElementById('barSell').style.width = `${100 - buyPct}%`;
+        document.getElementById('speedVal').innerText = `${d.metrics.trade_speed_tpm} trades/min`;
 
-          const buyVol = d.metrics.buy_vol || 1;
-          const sellVol = d.metrics.sell_vol || 1;
-          const buyPct = Math.max(15, Math.min(85, (buyVol / (buyVol + sellVol)) * 100));
-          document.getElementById('barBuy').style.width = `${buyPct}%`;
-          document.getElementById('barSell').style.width = `${100 - buyPct}%`;
-          document.getElementById('speedVal').innerText = `${d.metrics.trade_speed_tpm} trades/min`;
+        // Orderbook
+        const imb = d.metrics.book_imbalance;
+        const imbEl = document.getElementById('imbalanceVal');
+        imbEl.innerText = (imb > 0 ? '+' : '') + imb + '%';
+        imbEl.className = 'tile-value mono ' + (imb > 0 ? 'c-green' : (imb < 0 ? 'c-red' : ''));
 
-          // Orderbook
-          const imb = d.metrics.book_imbalance;
-          const imbEl = document.getElementById('imbalanceVal');
-          imbEl.innerText = (imb > 0 ? '+' : '') + imb + '%';
-          imbEl.className = 'tile-value mono ' + (imb > 0 ? 'c-green' : (imb < 0 ? 'c-red' : ''));
+        const bPct = Math.max(15, Math.min(85, 50 + (imb / 2)));
+        document.getElementById('bookBids').style.width = `${bPct}%`;
+        document.getElementById('bookAsks').style.width = `${100 - bPct}%`;
 
-          const bPct = Math.max(15, Math.min(85, 50 + (imb / 2)));
-          document.getElementById('bookBids').style.width = `${bPct}%`;
-          document.getElementById('bookAsks').style.width = `${100 - bPct}%`;
+        // Regime & HTF
+        document.getElementById('regimeVal').innerText = d.market_regime;
+        document.getElementById('chopVal').innerText = `Chop: ${d.metrics.choppiness_index}`;
+        
+        const htfEl = document.getElementById('htfVal');
+        htfEl.innerText = d.htf_trend_1h;
+        htfEl.className = 'tile-value ' + (d.htf_trend_1h === 'BULLISH' ? 'c-green' : (d.htf_trend_1h === 'BEARISH' ? 'c-red' : 'c-yellow'));
 
-          // Regime & HTF
-          document.getElementById('regimeVal').innerText = d.market_regime;
-          document.getElementById('chopVal').innerText = `Chop: ${d.metrics.choppiness_index}`;
-          
-          const htfEl = document.getElementById('htfVal');
-          htfEl.innerText = d.htf_trend_1h;
-          htfEl.className = 'tile-value ' + (d.htf_trend_1h === 'BULLISH' ? 'c-green' : (d.htf_trend_1h === 'BEARISH' ? 'c-red' : 'c-yellow'));
+        // Score & Action
+        const score = d.trade_score;
+        const pill = document.getElementById('scorePill');
+        const meter = document.getElementById('meterFill');
+        const act = document.getElementById('actionVal');
 
-          // Score & Action
-          const score = d.trade_score;
-          const pill = document.getElementById('scorePill');
-          const meter = document.getElementById('meterFill');
-          const act = document.getElementById('actionVal');
+        pill.innerText = `SCORE: ${score}/100`;
+        meter.style.width = `${score}%`;
+        act.innerText = d.action;
 
-          pill.innerText = `SCORE: ${score}/100`;
-          meter.style.width = `${score}%`;
-          act.innerText = d.action;
+        if (score >= 75) {
+          pill.style.background = 'var(--green-dim)';
+          pill.style.color = 'var(--green)';
+          pill.style.borderColor = 'rgba(0,242,152,0.3)';
+          meter.style.background = 'var(--green)';
+          act.className = 'action-headline c-green';
+        } else if (score <= 35) {
+          pill.style.background = 'var(--red-dim)';
+          pill.style.color = 'var(--red)';
+          pill.style.borderColor = 'rgba(255,51,102,0.3)';
+          meter.style.background = 'var(--red)';
+          act.className = 'action-headline c-red';
+        } else {
+          pill.style.background = 'var(--yellow-dim)';
+          pill.style.color = 'var(--yellow)';
+          pill.style.borderColor = 'rgba(255,184,0,0.3)';
+          meter.style.background = 'var(--yellow)';
+          act.className = 'action-headline c-yellow';
+        }
 
-          if (score >= 75) {
-            pill.style.background = 'var(--green-dim)';
-            pill.style.color = 'var(--green)';
-            pill.style.borderColor = 'rgba(0,242,152,0.3)';
-            meter.style.background = 'var(--green)';
-            act.className = 'action-headline c-green';
-          } else if (score <= 35) {
-            pill.style.background = 'var(--red-dim)';
-            pill.style.color = 'var(--red)';
-            pill.style.borderColor = 'rgba(255,51,102,0.3)';
-            meter.style.background = 'var(--red)';
-            act.className = 'action-headline c-red';
-          } else {
-            pill.style.background = 'var(--yellow-dim)';
-            pill.style.color = 'var(--yellow)';
-            pill.style.borderColor = 'rgba(255,184,0,0.3)';
-            meter.style.background = 'var(--yellow)';
-            act.className = 'action-headline c-yellow';
-          }
+        // Drivers
+        const rList = document.getElementById('reasonsList');
+        if (d.risk_drivers && d.risk_drivers.length > 0) {
+          rList.innerHTML = d.risk_drivers.map(r => 
+            `<div class="reason-row"><div class="reason-dot"></div><span>${r}</span></div>`
+          ).join('');
+        } else {
+          rList.innerHTML = '<span style="color: var(--text-dark); font-size: 0.7rem;">Баланс параметров в норме</span>';
+        }
 
-          // Drivers
-          const rList = document.getElementById('reasonsList');
-          if (d.risk_drivers && d.risk_drivers.length > 0) {
-            rList.innerHTML = d.risk_drivers.map(r => 
-              `<div class="reason-row"><div class="reason-dot"></div><span>${r}</span></div>`
-            ).join('');
-          } else {
-            rList.innerHTML = '<span style="color: var(--text-dark); font-size: 0.7rem;">Баланс параметров в норме</span>';
-          }
+        // Targets
+        document.getElementById('tpVal').innerText = d.take_profit > 0 ? '$' + Math.round(d.take_profit).toLocaleString() : '---';
+        document.getElementById('slVal').innerText = d.stop_loss > 0 ? '$' + Math.round(d.stop_loss).toLocaleString() : '---';
+        document.getElementById('invVal').innerText = d.structural_invalidation > 0 ? '$' + Math.round(d.structural_invalidation).toLocaleString() : '---';
 
-          // Targets
-          document.getElementById('tpVal').innerText = d.take_profit > 0 ? '$' + d.take_profit.toLocaleString() : '---';
-          document.getElementById('slVal').innerText = d.stop_loss > 0 ? '$' + d.stop_loss.toLocaleString() : '---';
-          document.getElementById('invVal').innerText = d.structural_invalidation > 0 ? '$' + d.structural_invalidation.toLocaleString() : '---';
+        recalcSizing();
 
-          recalcSizing();
-        } catch (e) {}
-      };
+      } catch (err) {
+        console.warn("Сбой опроса:", err);
+      }
     }
 
-    initStream();
+    // Первичный опрос и цикл каждые 1.5 секунды
+    fetchBackendState();
+    setInterval(fetchBackendState, 1500);
   </script>
 </body>
 </html>
