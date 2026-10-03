@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>BTC Risk & Execution Terminal</title>
+  <title>BTC Pro Risk Terminal</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <style>
     :root {
@@ -45,6 +45,9 @@
     .imbalance-bids { background: var(--accent-green); transition: width 0.3s; }
     .imbalance-asks { background: var(--accent-red); transition: width 0.3s; }
 
+    /* Absorption Banner */
+    .absorption-banner { display: none; background: rgba(245, 166, 35, 0.12); border: 1px solid var(--accent-yellow); border-radius: 8px; padding: 6px 10px; font-size: 0.72rem; margin-bottom: 8px; align-items: center; gap: 6px; }
+
     /* Risk Engine Card */
     .risk-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
     .action-tag { font-size: 1.1rem; font-weight: 800; }
@@ -84,7 +87,7 @@
 
   <div class="header">
     <div class="title">BTC Risk Terminal</div>
-    <div class="badge-live"><div class="dot"></div> SSE STREAM</div>
+    <div class="badge-live"><div class="dot"></div> REALTIME FLOW</div>
   </div>
 
   <div class="card price-box">
@@ -95,16 +98,17 @@
 
   <div class="grid">
     <div class="metric">
-      <div class="metric-title">Market Regime</div>
+      <div class="metric-title">Market Regime (15m/1h)</div>
       <div class="metric-value" id="regimeVal" style="font-size: 0.78rem;">---</div>
     </div>
     <div class="metric">
-      <div class="metric-title">HTF Trend (1h)</div>
-      <div class="metric-value" id="htfVal">---</div>
+      <div class="metric-title">CVD Flow (60s Delta)</div>
+      <div class="metric-value" id="cvdVal">0.0 BTC</div>
+      <div style="font-size: 0.65rem; color: var(--text-muted); margin-top: 2px;" id="speedVal">0 сделок/мин</div>
     </div>
     <div class="metric">
-      <div class="metric-title">Choppiness Index</div>
-      <div class="metric-value" id="chopVal">--</div>
+      <div class="metric-title">HTF Trend (1h EMA)</div>
+      <div class="metric-value" id="htfVal">---</div>
     </div>
     <div class="metric">
       <div class="metric-title">Orderbook Imbalance</div>
@@ -116,6 +120,11 @@
         </div>
       </div>
     </div>
+  </div>
+
+  <div id="absorptionAlert" class="absorption-banner">
+    <span>⚠️</span>
+    <span id="absorptionText">Лимитное поглощение айсбергами</span>
   </div>
 
   <div class="card">
@@ -183,7 +192,6 @@
     const BACKEND_URL = "https://btc-az-radar.duckdns.org:8443";
     let lastMarketData = null;
 
-    // 1. Потоковое получение котировок Binance (Web-клиент)
     async function syncTicker() {
       try {
         const res = await fetch("https://fapi.binance.com/fapi/v1/ticker/24hr?symbol=BTCUSDT");
@@ -202,7 +210,6 @@
     syncTicker();
     setInterval(syncTicker, 5000);
 
-    // 2. Локальный пересчет позиции под введенный депозит
     function recalcPosition() {
       if (!lastMarketData) return;
       const depo = parseFloat(document.getElementById('depoInput').value) || 1000;
@@ -210,7 +217,7 @@
       const price = lastMarketData.price;
       const sl = lastMarketData.stop_loss;
 
-      const riskPct = score > 80 ? 1.0 : (score > 60 ? 0.5 : 0.0);
+      const riskPct = score >= 80 ? 1.0 : (score > 60 ? 0.5 : 0.0);
       const riskUsd = depo * (riskPct / 100);
 
       document.getElementById('sizeRisk').innerText = `$${riskUsd.toFixed(2)} (${riskPct}%)`;
@@ -229,7 +236,6 @@
       }
     }
 
-    // 3. Подключение к серверному стриму SSE
     function initSSEStream() {
       const source = new EventSource(`${BACKEND_URL}/api/stream`);
 
@@ -244,8 +250,28 @@
           const htf = document.getElementById('htfVal');
           htf.innerText = data.htf_trend_1h;
           htf.className = 'metric-value ' + (data.htf_trend_1h === 'BULLISH' ? 'up' : (data.htf_trend_1h === 'BEARISH' ? 'down' : 'neutral'));
-          
-          document.getElementById('chopVal').innerText = data.metrics.choppiness_index;
+
+          // CVD Flow и скорость ленты
+          const cvd = data.metrics.cvd_flow_btc;
+          const cvdEl = document.getElementById('cvdVal');
+          cvdEl.innerText = (cvd > 0 ? '+' : '') + cvd.toFixed(2) + ' BTC';
+          cvdEl.className = 'metric-value ' + (cvd > 0 ? 'up' : (cvd < 0 ? 'down' : 'neutral'));
+          document.getElementById('speedVal').innerText = `${data.metrics.trade_speed_tpm} сделок/мин`;
+
+          // Баннер айсберг-поглощения
+          const absBox = document.getElementById('absorptionAlert');
+          const absTxt = document.getElementById('absorptionText');
+          if (data.metrics.absorption_state === "BULLISH_ABSORPTION") {
+            absBox.style.display = 'flex';
+            absBox.style.borderColor = 'var(--accent-green)';
+            absTxt.innerText = "Лимитное поглощение продаж (Кит удерживает Bid)";
+          } else if (data.metrics.absorption_state === "BEARISH_ABSORPTION") {
+            absBox.style.display = 'flex';
+            absBox.style.borderColor = 'var(--accent-red)';
+            absTxt.innerText = "Лимитное поглощение покупок (Кит удерживает Ask)";
+          } else {
+            absBox.style.display = 'none';
+          }
 
           // Стакан (Imbalance)
           const imb = data.metrics.book_imbalance;
@@ -253,7 +279,6 @@
           imbEl.innerText = (imb > 0 ? '+' : '') + imb + '%';
           imbEl.className = 'metric-value ' + (imb > 0 ? 'up' : (imb < 0 ? 'down' : 'neutral'));
           
-          // Пропорция стакана: нормируем от [-100, 100] к [0, 100]
           const bidsPct = Math.max(10, Math.min(90, 50 + (imb / 2)));
           document.getElementById('barBids').style.width = `${bidsPct}%`;
           document.getElementById('barAsks').style.width = `${100 - bidsPct}%`;
@@ -291,7 +316,7 @@
           document.getElementById('slLevel').innerText = data.stop_loss > 0 ? '$' + data.stop_loss.toLocaleString() : '---';
           document.getElementById('invLevel').innerText = data.structural_invalidation > 0 ? '$' + data.structural_invalidation.toLocaleString() : '---';
 
-          // Пересчет сайзинга
+          // Пересчет сайзинга под депозит
           recalcPosition();
 
         } catch (err) {
