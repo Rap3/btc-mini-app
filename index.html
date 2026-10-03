@@ -37,14 +37,13 @@
     }
     .mono { font-family: 'JetBrains Mono', monospace; }
 
-    /* Top Bar */
     .top-bar {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 4px 2px 12px;
+      padding: 4px 2px 10px;
       border-bottom: 1px solid var(--border);
-      margin-bottom: 12px;
+      margin-bottom: 10px;
     }
     .brand {
       display: flex;
@@ -83,28 +82,26 @@
     }
     @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } }
 
-    /* Hero Price Matrix */
     .hero-panel {
       background: linear-gradient(180deg, var(--panel) 0%, rgba(15, 19, 28, 0.6) 100%);
       border: 1px solid var(--border);
       border-radius: 12px;
-      padding: 14px;
+      padding: 12px 14px;
       margin-bottom: 10px;
     }
     .hero-meta {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      font-size: 0.7rem;
+      font-size: 0.68rem;
       color: var(--text-dim);
       text-transform: uppercase;
-      letter-spacing: 0.5px;
     }
     .price-large {
-      font-size: 2.2rem;
+      font-size: 2.1rem;
       font-weight: 800;
       letter-spacing: -1px;
-      margin: 4px 0 2px;
+      margin: 2px 0;
     }
     .change-badge {
       font-size: 0.78rem;
@@ -112,6 +109,61 @@
       display: inline-flex;
       align-items: center;
       gap: 4px;
+    }
+
+    /* Liquidity Radar Card */
+    .radar-card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 10px 12px;
+      margin-bottom: 10px;
+    }
+    .radar-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+    .radar-title {
+      font-size: 0.65rem;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+    }
+    .radar-bias {
+      font-size: 0.68rem;
+      font-weight: 700;
+      color: var(--yellow);
+    }
+    .track-wrapper {
+      position: relative;
+      margin: 12px 0 6px;
+    }
+    .track-bar {
+      height: 6px;
+      background: linear-gradient(90deg, rgba(255,51,102,0.4) 0%, rgba(255,184,0,0.2) 50%, rgba(0,242,152,0.4) 100%);
+      border-radius: 3px;
+    }
+    .track-pointer {
+      position: absolute;
+      top: -3px;
+      left: 50%;
+      width: 12px;
+      height: 12px;
+      background: #fff;
+      border: 2px solid var(--blue);
+      border-radius: 50%;
+      transform: translateX(-50%);
+      transition: left 0.4s ease;
+      box-shadow: 0 0 6px rgba(58, 134, 255, 0.8);
+    }
+    .track-labels {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.65rem;
+      color: var(--text-dim);
     }
 
     /* Core Microstructure Grid */
@@ -138,18 +190,17 @@
       margin-bottom: 4px;
     }
     .tile-value {
-      font-size: 1rem;
+      font-size: 0.95rem;
       font-weight: 700;
     }
     .tile-sub {
-      font-size: 0.65rem;
+      font-size: 0.62rem;
       color: var(--text-dark);
       margin-top: 4px;
     }
 
-    /* Flow Bar Visualizer */
     .flow-bar-wrap {
-      margin-top: 6px;
+      margin-top: 5px;
       height: 4px;
       background: #182030;
       border-radius: 2px;
@@ -164,36 +215,34 @@
       background: var(--panel);
       border: 1px solid var(--border);
       border-radius: 12px;
-      padding: 14px;
+      padding: 12px;
       margin-bottom: 10px;
     }
     .term-top {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 10px;
+      margin-bottom: 8px;
     }
     .action-headline {
-      font-size: 1.15rem;
+      font-size: 1.1rem;
       font-weight: 800;
-      letter-spacing: -0.3px;
     }
     .score-pill {
-      font-size: 0.72rem;
+      font-size: 0.7rem;
       font-weight: 700;
-      padding: 3px 8px;
+      padding: 2px 7px;
       border-radius: 6px;
       border: 1px solid transparent;
     }
 
-    /* Progress Meter */
     .meter-rail {
       width: 100%;
-      height: 5px;
+      height: 4px;
       background: #151a24;
       border-radius: 4px;
       overflow: hidden;
-      margin-bottom: 12px;
+      margin-bottom: 10px;
     }
     .meter-fill {
       height: 100%;
@@ -201,12 +250,11 @@
       transition: width 0.5s ease;
     }
 
-    /* Risk Drivers List */
     .reasons-box {
       background: var(--panel-alt);
       border-radius: 8px;
-      padding: 8px 10px;
-      margin-bottom: 12px;
+      padding: 8px;
+      margin-bottom: 10px;
       border: 1px solid rgba(255,255,255,0.03);
     }
     .reasons-title {
@@ -220,9 +268,9 @@
       display: flex;
       align-items: center;
       gap: 6px;
-      font-size: 0.72rem;
+      font-size: 0.7rem;
       color: #cfd8e8;
-      margin-bottom: 3px;
+      margin-bottom: 2px;
     }
     .reason-dot {
       width: 4px;
@@ -232,87 +280,58 @@
       flex-shrink: 0;
     }
 
-    /* Institutional Sizing Desk */
+    /* Desk */
     .desk-box {
       background: var(--panel-alt);
       border-radius: 8px;
-      padding: 10px;
+      padding: 8px;
       border: 1px solid var(--border);
     }
     .desk-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 8px;
+      margin-bottom: 6px;
     }
     .desk-title {
-      font-size: 0.65rem;
+      font-size: 0.62rem;
       color: var(--text-dim);
       text-transform: uppercase;
       font-weight: 700;
     }
-    .depo-chips {
-      display: flex;
-      gap: 4px;
-    }
+    .depo-chips { display: flex; gap: 4px; }
     .chip {
       background: var(--panel);
       border: 1px solid var(--border);
       color: var(--text-dim);
-      font-size: 0.62rem;
+      font-size: 0.6rem;
       padding: 2px 6px;
       border-radius: 4px;
       cursor: pointer;
       font-weight: 600;
     }
-    .chip.active {
-      background: var(--blue);
-      color: #fff;
-      border-color: var(--blue);
-    }
-    .desk-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr 1fr;
-      gap: 6px;
-      text-align: center;
-    }
-    .desk-item {
-      background: var(--panel);
-      padding: 6px;
-      border-radius: 6px;
-      border: 1px solid rgba(255,255,255,0.02);
-    }
-    .desk-label {
-      font-size: 0.6rem;
-      color: var(--text-dim);
-      margin-bottom: 2px;
-    }
-    .desk-val {
-      font-size: 0.8rem;
-      font-weight: 700;
-    }
+    .chip.active { background: var(--blue); color: #fff; border-color: var(--blue); }
+    .desk-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; text-align: center; }
+    .desk-item { background: var(--panel); padding: 5px; border-radius: 6px; }
+    .desk-label { font-size: 0.58rem; color: var(--text-dim); margin-bottom: 2px; }
+    .desk-val { font-size: 0.78rem; font-weight: 700; }
 
-    /* Execution Targets */
     .targets-row {
       display: grid;
       grid-template-columns: 1fr 1fr 1fr;
       gap: 6px;
       margin-top: 10px;
-      padding-top: 10px;
+      padding-top: 8px;
       border-top: 1px dashed var(--border);
       text-align: center;
     }
     .target-col { display: flex; flex-direction: column; }
-    .target-lbl { font-size: 0.6rem; color: var(--text-dim); }
-    .target-val { font-size: 0.8rem; font-weight: 700; margin-top: 2px; }
+    .target-lbl { font-size: 0.58rem; color: var(--text-dim); }
+    .target-val { font-size: 0.78rem; font-weight: 700; margin-top: 2px; }
 
-    /* Utilities */
     .c-green { color: var(--green); }
     .c-red { color: var(--red); }
     .c-yellow { color: var(--yellow); }
-    .bg-green { background: var(--green); }
-    .bg-red { background: var(--red); }
-    .bg-yellow { background: var(--yellow); }
   </style>
 </head>
 <body>
@@ -330,15 +349,31 @@
 
   <div class="hero-panel">
     <div class="hero-meta">
-      <span>BTC/USDT • PERP CONTRACT</span>
+      <span>BTC/USDT • PERPETUAL</span>
       <span id="volatilityTag" class="mono">ATR: --</span>
     </div>
     <div class="price-large mono" id="btcPrice">------.-</div>
     <div class="change-badge mono" id="btcChange">0.00% (24h)</div>
   </div>
 
+  <!-- Liquidity Radar -->
+  <div class="radar-card">
+    <div class="radar-header">
+      <span class="radar-title">Liquidity Pools Magnet</span>
+      <span class="radar-bias mono" id="radarBias">BIAS: ---</span>
+    </div>
+    <div class="track-wrapper">
+      <div class="track-bar"></div>
+      <div class="track-pointer" id="trackPointer" style="left: 50%;"></div>
+    </div>
+    <div class="track-labels mono">
+      <span id="pdlVal" class="c-red">Sell-side: $--</span>
+      <span id="targetMagnet" style="color: #fff; font-weight: 700;">Target: $--</span>
+      <span id="pdhVal" class="c-green">Buy-side: $--</span>
+    </div>
+  </div>
+
   <div class="grid-2x2">
-    <!-- CVD Flow -->
     <div class="tile">
       <div class="tile-header">Order Flow (60s Delta)</div>
       <div class="tile-value mono" id="cvdVal">0.00 BTC</div>
@@ -349,7 +384,6 @@
       <div class="tile-sub mono" id="speedVal">-- trades/min</div>
     </div>
 
-    <!-- Orderbook Imbalance -->
     <div class="tile">
       <div class="tile-header">Depth Imbalance (L2)</div>
       <div class="tile-value mono" id="imbalanceVal">0.0%</div>
@@ -357,17 +391,15 @@
         <div class="flow-bar-buy" id="bookBids" style="width: 50%;"></div>
         <div class="flow-bar-sell" id="bookAsks" style="width: 50%;"></div>
       </div>
-      <div class="tile-sub mono" id="bookDesc">Bids vs Asks</div>
+      <div class="tile-sub mono">Bids vs Asks</div>
     </div>
 
-    <!-- Market Regime -->
     <div class="tile">
       <div class="tile-header">Market Regime</div>
-      <div class="tile-value" id="regimeVal" style="font-size: 0.85rem;">CALCULATING...</div>
+      <div class="tile-value" id="regimeVal" style="font-size: 0.82rem;">CALCULATING...</div>
       <div class="tile-sub mono" id="chopVal">Chop Index: --</div>
     </div>
 
-    <!-- HTF Bias -->
     <div class="tile">
       <div class="tile-header">1H HTF Alignment</div>
       <div class="tile-value" id="htfVal">---</div>
@@ -390,7 +422,6 @@
       <div id="reasonsList">Сбор агрегированных потоков...</div>
     </div>
 
-    <!-- Sizing Desk -->
     <div class="desk-box">
       <div class="desk-header">
         <span class="desk-title">Risk Allocation Desk</span>
@@ -417,7 +448,6 @@
       </div>
     </div>
 
-    <!-- Targets -->
     <div class="targets-row">
       <div class="target-col">
         <span class="target-lbl">Take Profit</span>
@@ -457,7 +487,6 @@
         const t = await res.json();
         const p = parseFloat(t.lastPrice);
         const c = parseFloat(t.priceChangePercent);
-        
         document.getElementById('btcPrice').innerText = '$' + p.toLocaleString('en-US', { minimumFractionDigits: 1 });
         const cEl = document.getElementById('btcChange');
         cEl.innerText = (c >= 0 ? '+' : '') + c.toFixed(2) + '% (24h)';
@@ -502,6 +531,16 @@
           lastData = d;
 
           document.getElementById('volatilityTag').innerText = `ATR: $${d.metrics.atr_volatility}`;
+
+          // Радар Ликвидности
+          if (d.liquidity_radar) {
+            const rad = d.liquidity_radar;
+            document.getElementById('radarBias').innerText = `BIAS: ${rad.magnet_bias}`;
+            document.getElementById('pdlVal').innerText = `Sell-side: $${rad.pool_low_pdl.toLocaleString()}`;
+            document.getElementById('pdhVal').innerText = `Buy-side: $${rad.pool_high_pdh.toLocaleString()}`;
+            document.getElementById('targetMagnet').innerText = `Target: $${rad.magnet_target.toLocaleString()}`;
+            document.getElementById('trackPointer').style.left = `${rad.range_position_pct}%`;
+          }
 
           // Flow (CVD)
           const cvd = d.metrics.cvd_flow_btc;
